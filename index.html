@@ -9,14 +9,14 @@
 <!-- html2canvas desde CDN para exportar la carta como imagen PNG -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-<!-- Tipografías: Cinzel (display épico tipo fantasy/TCG) + Oswald (números impacto) + Roboto Condensed (UI) -->
+<!-- Tipografías: Montserrat (todo) + Oswald (números enormes de impacto) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Montserrat:wght@700;800;900&family=Oswald:wght@500;700&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
 
 <style>
 /* =========================================================
-   HeroCard TCG · Design Tokens
+   HeroCard v3 · Design Tokens
    ========================================================= */
 :root {
   --bg-0: #05060a;
@@ -29,13 +29,14 @@
   --type-dark: #8a1a0a;
   --type-soft: rgba(255,77,46,.35);
 
-  /* Marco dorado TCG */
+  /* Marco dorado */
   --gold-1: #f8e199;
   --gold-2: #c48e2b;
   --gold-3: #7a4d15;
 
-  --card-w: min(92vw, 380px);
-  --card-h: calc(var(--card-w) * 1.4);
+  /* Carta con ratio 9:16 (Stories-ready) */
+  --card-w: min(88vw, 360px);
+  --card-h: calc(var(--card-w) * 16 / 9);
 }
 
 * { box-sizing: border-box; }
@@ -50,7 +51,7 @@ body {
     radial-gradient(800px 500px at 50% 120%, rgba(255,176,32,.10), transparent 60%),
     var(--bg-0);
   color: var(--ink);
-  font-family: 'Roboto Condensed', system-ui, sans-serif;
+  font-family: 'Montserrat', system-ui, sans-serif;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
@@ -102,9 +103,9 @@ header.brand {
   border-bottom: 1px solid var(--line);
 }
 .logo {
-  font-family: 'Cinzel', serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 900;
-  letter-spacing: .04em;
+  letter-spacing: -.01em;
   font-size: 20px;
   text-transform: uppercase;
 }
@@ -149,10 +150,10 @@ header.brand {
 }
 
 .form-title {
-  font-family: 'Cinzel', serif;
-  font-weight: 700;
-  letter-spacing: .14em;
-  font-size: 14px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  font-size: 18px;
   text-transform: uppercase;
   color: var(--ink);
   margin: 0 0 14px;
@@ -172,6 +173,7 @@ label {
   text-transform: uppercase;
   color: var(--ink-dim);
   margin: 0 0 6px 2px;
+  font-weight: 600;
 }
 
 input, select {
@@ -181,7 +183,7 @@ input, select {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 12px 14px;
-  font: 500 14px/1.2 'Roboto Condensed', sans-serif;
+  font: 600 14px/1.2 'Montserrat', sans-serif;
   outline: none;
   transition: border-color .2s, box-shadow .2s;
 }
@@ -247,6 +249,7 @@ select {
   color: var(--ink-dim);
   background: rgba(5,6,10,.4);
   margin: 0;
+  font-weight: 600;
 }
 .photo-input input[type="file"] { display: none; }
 
@@ -263,8 +266,8 @@ select {
   cursor: pointer;
   padding: 14px 18px;
   border-radius: 12px;
-  font: 700 12px/1 'Cinzel', serif;
-  letter-spacing: .14em;
+  font: 800 12px/1 'Montserrat', sans-serif;
+  letter-spacing: .08em;
   text-transform: uppercase;
   transition: transform .15s ease, box-shadow .25s ease;
   color: #1a0f00;
@@ -285,42 +288,95 @@ select {
 .btn.ghost:hover { border-color: var(--gold-1); color: var(--gold-1); }
 
 /* =========================================================
-   Stage & Card (ESTILO POKÉMON TCG)
+   Stage & Card · VERSIÓN COMPARTIBLE (ratio 9:16)
    ========================================================= */
 .stage {
-  perspective: 1400px;
   width: var(--card-w);
   height: var(--card-h);
   position: relative;
+}
+
+/* Stage oculto hasta que el usuario pulse Generar */
+.stage.hidden {
+  display: none;
+}
+
+/* Animación de revelación al generar la carta */
+@keyframes card-reveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) rotateY(90deg);
+    filter: blur(20px);
+  }
+  40% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  60% {
+    transform: scale(1.05) rotateY(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotateY(0deg);
+    filter: blur(0);
+  }
+}
+.stage.revealing {
+  perspective: 1200px;
+}
+.stage.revealing .card {
+  animation: card-reveal 1.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .card {
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 18px;
-  transform-style: preserve-3d;
-  transition: transform .18s ease-out;
-  will-change: transform;
+  border-radius: 22px;
 
-  /* Borde exterior coloreado según el tipo */
-  background:
-    linear-gradient(180deg, var(--type) 0%, var(--type-dark) 100%);
-  padding: 10px;
+  /* Borde exterior del color del tipo */
+  background: linear-gradient(180deg, var(--type) 0%, var(--type-dark) 100%);
+  padding: 12px;
   box-shadow:
-    0 30px 80px rgba(0,0,0,.55),
-    0 0 60px var(--type-soft);
+    0 30px 80px rgba(0,0,0,.6),
+    0 0 80px var(--type-soft),
+    0 0 0 1px rgba(255,255,255,.06);
   overflow: hidden;
 }
 
-/* Marco dorado interior (doble borde típico de TCG) */
+/* Borde dorado girando (efecto TCG premium) */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 20px;
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    var(--gold-1) 0deg,
+    transparent 80deg,
+    var(--gold-2) 180deg,
+    transparent 260deg,
+    var(--gold-1) 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: spin 8s linear infinite;
+  opacity: .9;
+  pointer-events: none;
+  z-index: 3;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Marco dorado interior */
 .card-frame {
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 10px;
+  border-radius: 14px;
   background: linear-gradient(135deg, var(--gold-1) 0%, var(--gold-2) 35%, var(--gold-3) 65%, var(--gold-2) 85%, var(--gold-1) 100%);
-  padding: 4px;
+  padding: 5px;
   box-shadow: inset 0 0 8px rgba(0,0,0,.4);
 }
 
@@ -328,17 +384,17 @@ select {
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 6px;
+  border-radius: 8px;
   background: linear-gradient(180deg, #f5e9c8 0%, #e8d49b 100%);
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-/* Rayas foil muy sutiles sobre toda la carta */
+/* Rayas foil muy sutiles */
 .card .foil-lines {
   position: absolute; inset: 0;
-  border-radius: 18px;
+  border-radius: 22px;
   pointer-events: none;
   z-index: 8;
   background: repeating-linear-gradient(
@@ -349,108 +405,102 @@ select {
   mix-blend-mode: screen;
 }
 
-/* Capa HOLOGRÁFICA - gradiente arcoíris + blend mode */
+/* Capa HOLOGRÁFICA estática (sigue ahí, sin tilt) */
 .card .holo {
   position: absolute;
   inset: 0;
-  border-radius: 18px;
+  border-radius: 22px;
   pointer-events: none;
   z-index: 9;
   mix-blend-mode: color-dodge;
-  opacity: .45;
+  opacity: .5;
   background:
     linear-gradient(
       115deg,
       transparent 0%,
       rgba(255, 0, 122, .55) 20%,
       rgba(0, 224, 255, .55) 40%,
-      rgba(255, 255, 255, .65) 50%,
+      rgba(255, 255, 255, .7) 50%,
       rgba(177, 75, 255, .55) 60%,
       rgba(255, 176, 32, .55) 80%,
       transparent 100%
     );
-  background-size: 300% 300%;
+  background-size: 200% 200%;
   background-position: 50% 50%;
   filter: blur(1px);
+  /* Animación lenta del holo para que "viva" sin depender del giroscopio */
+  animation: holo-shift 10s ease-in-out infinite alternate;
 }
-
-/* Gloss radial puntual que sigue al cursor */
-.card .gloss {
-  position: absolute;
-  inset: 0;
-  border-radius: 18px;
-  pointer-events: none;
-  z-index: 10;
-  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,.35), transparent 40%);
-  mix-blend-mode: overlay;
-  opacity: 0;
-  transition: opacity .25s ease;
+@keyframes holo-shift {
+  0%   { background-position: 20% 30%; }
+  100% { background-position: 80% 70%; }
 }
-.card.is-active .gloss { opacity: 1; }
 
 /* =========================================================
-   CONTENIDO · Estructura TCG
+   CONTENIDO · Nueva jerarquía de impacto
    ========================================================= */
 
-/* HEADER: Nombre + HP */
+/* HEADER: Nombre + HP (HP GIGANTE) */
 .tcg-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 12px 6px;
-  background: linear-gradient(180deg, rgba(255,255,255,.25), transparent);
+  padding: 10px 14px 6px;
+  background: linear-gradient(180deg, rgba(255,255,255,.35), transparent);
 }
 .tcg-name {
   font-family: 'Montserrat', sans-serif;
   font-weight: 900;
-  font-size: 20px;
-  letter-spacing: -.01em;
+  font-size: 22px;
+  letter-spacing: -.02em;
   color: #1a0f00;
   text-shadow: 0 1px 0 rgba(255,255,255,.4);
   line-height: 1;
   text-transform: uppercase;
-  max-width: 65%;
+  max-width: 58%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding-top: 6px;
 }
 .tcg-hp {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 6px;
   color: #c00e0e;
   font-family: 'Oswald', sans-serif;
   font-weight: 700;
   line-height: 1;
 }
 .tcg-hp .lbl {
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: .08em;
+  transform: translateY(-6px);
 }
 .tcg-hp .val {
-  font-size: 26px;
-  text-shadow: 0 1px 0 rgba(255,255,255,.5);
+  font-size: 40px;
+  text-shadow: 0 1px 0 rgba(255,255,255,.5), 0 3px 6px rgba(192,14,14,.3);
 }
 
 /* SUBHEADER: tipo/deporte */
 .tcg-subheader {
-  padding: 0 12px 6px;
-  font-family: 'Oswald', sans-serif;
-  font-weight: 500;
+  padding: 0 14px 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
   font-size: 10px;
   letter-spacing: .22em;
   text-transform: uppercase;
   color: #4a3a1a;
 }
 
-/* ILUSTRACIÓN: Foto central con marco dorado */
+/* ILUSTRACIÓN: Foto central más grande */
 .tcg-illustration {
   position: relative;
-  margin: 0 10px;
-  aspect-ratio: 4 / 3;
+  margin: 0 12px;
+  aspect-ratio: 1 / 1;
   border: 3px solid var(--gold-2);
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(255,255,255,.3) 0%, transparent 20%),
@@ -469,17 +519,16 @@ select {
   background: center/cover no-repeat;
 }
 .tcg-illustration .placeholder {
-  font-family: 'Cinzel', serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 900;
-  font-size: 64px;
+  font-size: 84px;
   color: rgba(0,0,0,.3);
   text-shadow: 0 2px 0 rgba(255,255,255,.3);
 }
-/* Sello de tipo en esquina de la ilustración */
 .type-badge {
   position: absolute;
-  top: 6px; right: 6px;
-  width: 34px; height: 34px;
+  top: 8px; right: 8px;
+  width: 38px; height: 38px;
   border-radius: 50%;
   background: var(--type);
   border: 2px solid var(--gold-1);
@@ -488,63 +537,53 @@ select {
   justify-content: center;
   box-shadow: 0 2px 6px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.3), inset 0 -2px 4px rgba(0,0,0,.25);
 }
-.type-badge svg { width: 18px; height: 18px; fill: #fff; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+.type-badge svg { width: 20px; height: 20px; fill: #fff; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
 
-/* DESCRIPCIÓN corta bajo la ilustración (tipo "longitud/peso" de Pokémon) */
+/* DESCRIPCIÓN corta bajo la ilustración */
 .tcg-desc {
-  padding: 6px 12px 4px;
-  font-size: 10px;
-  font-style: italic;
+  padding: 8px 14px 6px;
+  font-size: 11px;
+  font-weight: 500;
   color: #4a3a1a;
   border-bottom: 1px solid rgba(0,0,0,.15);
   letter-spacing: .02em;
+  text-align: center;
 }
 
-/* SECCIÓN ATAQUE */
+/* SECCIÓN ATAQUE — DAÑO GIGANTE */
 .tcg-attack {
-  padding: 10px 12px;
+  padding: 12px 16px 8px 14px;
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  flex: 1;
+  align-items: center;
+  gap: 12px;
   position: relative;
 }
-.tcg-attack::before {
-  content: "";
-  position: absolute;
-  left: 12px; right: 12px;
-  bottom: 0;
-  height: 1px;
-  background: rgba(0,0,0,.15);
-}
 .attack-cost {
-  display: flex;
-  gap: 3px;
-  padding-top: 2px;
   flex-shrink: 0;
 }
 .energy {
-  width: 24px; height: 24px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   background: var(--type);
-  border: 1.5px solid #1a0f00;
+  border: 2px solid #1a0f00;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 1px 3px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.3), inset 0 -2px 3px rgba(0,0,0,.25);
 }
-.energy svg { width: 13px; height: 13px; fill: #fff; filter: drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+.energy svg { width: 15px; height: 15px; fill: #fff; filter: drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+
 .attack-body {
   flex: 1;
   min-width: 0;
 }
 .attack-name {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 800;
-  font-size: 16px;
+  font-weight: 900;
+  font-size: 18px;
   color: #1a0f00;
   text-transform: uppercase;
-  letter-spacing: .01em;
+  letter-spacing: -.01em;
   line-height: 1;
   margin-bottom: 4px;
 }
@@ -553,46 +592,107 @@ select {
   color: #4a3a1a;
   line-height: 1.3;
   font-style: italic;
+  font-weight: 500;
 }
 .attack-damage {
   font-family: 'Oswald', sans-serif;
   font-weight: 700;
-  font-size: 30px;
+  font-size: 44px;
   color: #1a0f00;
   line-height: 1;
   flex-shrink: 0;
-  padding-top: 2px;
-  text-shadow: 1px 1px 0 rgba(255,255,255,.4);
+  text-shadow: 1px 2px 0 rgba(255,255,255,.4), 0 4px 10px rgba(0,0,0,.15);
+  padding-right: 2px;
 }
 
-/* FOOTER: datos tipo Pokedex (rareza + id coleccionable) */
+/* =========================================================
+   ACHIEVEMENT BADGE (la pieza que grita "compárteme")
+   ========================================================= */
+.achievement {
+  margin: 4px 14px 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1a0f00 0%, #3a2410 100%);
+  border: 1px solid var(--gold-2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25), inset 0 1px 0 var(--gold-1);
+  position: relative;
+  overflow: hidden;
+}
+.achievement::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(248,225,153,.2) 50%, transparent 70%);
+  background-size: 250% 100%;
+  animation: shimmer 4s linear infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -100% 0; }
+}
+.achievement svg {
+  width: 22px; height: 22px;
+  fill: var(--gold-1);
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px var(--gold-1));
+  position: relative;
+}
+.achievement .ach-text {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.achievement .ach-label {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: 13px;
+  color: var(--gold-1);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(248,225,153,.5);
+}
+.achievement .ach-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 10px;
+  color: #c9b57d;
+  letter-spacing: .05em;
+  margin-top: 3px;
+  line-height: 1;
+}
+
+/* =========================================================
+   FOOTER con firma de marca
+   ========================================================= */
 .tcg-footer {
-  padding: 6px 12px 8px;
+  margin-top: auto;
+  padding: 10px 14px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: 'Oswald', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 9px;
   letter-spacing: .15em;
   text-transform: uppercase;
   color: #4a3a1a;
+  font-weight: 600;
+  border-top: 1px solid rgba(0,0,0,.12);
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,.04));
 }
-.tcg-footer .rarity-dot {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+.tcg-footer .brand-sig {
+  font-weight: 900;
+  color: #1a0f00;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  font-size: 11px;
 }
-.tcg-footer .dot {
-  display: inline-block;
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: #4a3a1a;
-  border: 1px solid rgba(0,0,0,.3);
+.tcg-footer .brand-sig span {
+  color: var(--type-dark);
 }
-.card[data-rarity="common"]    .dot { background: #4a3a1a; }
-.card[data-rarity="elite"]     .dot { background: #1e9ce8; box-shadow: 0 0 6px #1e9ce8; }
-.card[data-rarity="epic"]      .dot { background: #b14bff; box-shadow: 0 0 6px #b14bff; }
-.card[data-rarity="legendary"] .dot { background: var(--gold-1); box-shadow: 0 0 10px var(--gold-1); }
 
 /* Partículas legendarias */
 .particles {
@@ -602,7 +702,7 @@ select {
   z-index: 11;
   display: none;
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: 22px;
 }
 .card[data-rarity="legendary"] .particles { display: block; }
 .particles i {
@@ -621,7 +721,7 @@ select {
 }
 
 /* =========================================================
-   Toolbar bajo la carta
+   Toolbar
    ========================================================= */
 .toolbar {
   display: flex;
@@ -629,6 +729,7 @@ select {
   width: var(--card-w);
   flex-wrap: wrap;
 }
+.toolbar.hidden { display: none; }
 .toolbar .btn { flex: 1 1 140px; }
 
 .btn.viral {
@@ -689,36 +790,13 @@ footer .d { color: var(--gold-1); }
   color: var(--ink-dim);
   text-align: center;
 }
+.hint.hidden { display: none; }
 
-/* Botón para activar giroscopio en iOS (oculto por defecto) */
-.gyro-btn {
-  display: none;
-  margin: 0 auto;
-  padding: 10px 16px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid var(--gold-1);
-  border-radius: 999px;
-  color: var(--gold-1);
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: .15em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background .2s, transform .15s;
-}
-.gyro-btn.visible { display: inline-block; }
-.gyro-btn:hover { background: rgba(248,225,153,.1); }
-.gyro-btn:active { transform: scale(.97); }
-.gyro-btn.active {
-  background: rgba(248,225,153,.15);
-  color: var(--gold-1);
-}
-
-/* Anti-jump durante captura */
-.card.capturing { transition: none !important; transform: none !important; }
-.card.capturing .holo { background-position: 50% 50% !important; }
-.card.capturing .gloss { opacity: 0 !important; }
+/* Capturing (sin transforms ya, pero dejamos por consistencia) */
+.card.capturing { animation: none !important; }
+.card.capturing::before { animation: none !important; }
+.card.capturing .holo { animation: none !important; }
+.card.capturing .achievement::before { animation: none !important; }
 
 @media (max-width: 520px) {
   .grid { grid-template-columns: 1fr; }
@@ -808,35 +886,30 @@ footer .d { color: var(--gold-1); }
     </div>
   </section>
 
-  <!-- ============ CARD TCG ============ -->
-  <div class="stage" id="stage">
+  <!-- ============ CARD ============ -->
+  <div class="stage hidden" id="stage">
     <article class="card" id="hero-card" data-rarity="elite">
       <div class="card-frame">
         <div class="card-inner">
 
-          <!-- Header: nombre + HP -->
           <div class="tcg-header">
             <div class="tcg-name" id="c-name">TU NOMBRE</div>
             <div class="tcg-hp">
               <span class="lbl">HP</span>
-              <span class="val" id="c-hp">100</span>
+              <span class="val" id="c-hp">180</span>
             </div>
           </div>
 
-          <!-- Subheader: tipo/deporte -->
-          <div class="tcg-subheader" id="c-subheader">Atleta · Running</div>
+          <div class="tcg-subheader" id="c-subheader">Corredor · Running</div>
 
-          <!-- Ilustración central -->
           <div class="tcg-illustration">
             <div class="photo" id="c-photo"></div>
             <div class="placeholder" id="c-placeholder">?</div>
             <div class="type-badge" id="c-typebadge"></div>
           </div>
 
-          <!-- Descripción tipo flavor text -->
-          <div class="tcg-desc" id="c-desc">Registro: 10 km · 00.00.00</div>
+          <div class="tcg-desc" id="c-desc">10 km · 48:20 · 18.04.26</div>
 
-          <!-- Ataque -->
           <div class="tcg-attack">
             <div class="attack-cost" id="c-cost">
               <div class="energy"></div>
@@ -845,52 +918,52 @@ footer .d { color: var(--gold-1); }
               <div class="attack-name" id="c-attack">Ataque Rápido</div>
               <div class="attack-flavor" id="c-flavor">Velocidad pura. Nada te frena.</div>
             </div>
-            <div class="attack-damage" id="c-damage">30</div>
+            <div class="attack-damage" id="c-damage">80</div>
           </div>
 
-          <!-- Footer: rareza + ID coleccionable -->
+          <!-- Achievement badge: la pieza que grita "compárteme" -->
+          <div class="achievement">
+            <svg id="c-ach-icon" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg>
+            <div class="ach-text">
+              <div class="ach-label" id="c-ach-label">ELITE UNLOCKED</div>
+              <div class="ach-sub" id="c-ach-sub">Top 30% de atletas como tú</div>
+            </div>
+          </div>
+
           <div class="tcg-footer">
-            <span class="rarity-dot">
-              <span class="dot"></span>
-              <span id="c-rarity">ELITE</span>
-            </span>
-            <span id="c-id">N.º RUN-030 / ∞</span>
+            <span id="c-id">N.º RUN-080</span>
+            <span class="brand-sig">Hero<span>Card</span></span>
           </div>
 
         </div>
       </div>
 
-      <!-- Capas de efecto (fuera del frame para cubrir toda la carta) -->
       <div class="foil-lines"></div>
       <div class="holo" id="holo"></div>
-      <div class="gloss" id="gloss"></div>
       <div class="particles" id="particles"></div>
     </article>
   </div>
 
-  <!-- ============ TOOLBAR ============ -->
-  <div class="toolbar">
+  <div class="toolbar hidden" id="toolbar">
     <button class="btn ghost" id="btnEdit">Editar</button>
     <button class="btn viral" id="btnShare">Compartir Carta</button>
   </div>
 
-  <p class="hint">Inclina tu móvil para ver el efecto holográfico · En escritorio mueve el ratón sobre la carta</p>
+  <p class="hint hidden" id="hint">Genera tu carta del día y compártela en Stories</p>
 
-  <button class="gyro-btn" id="gyroBtn">Activar efecto 3D</button>
-
-  <footer>HeroCard <span class="d">●</span> v2.0 TCG</footer>
+  <footer>HeroCard <span class="d">●</span> v3.0</footer>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 /* =========================================================
-   HeroCard TCG · App Logic
+   HeroCard v3 · App Logic (sin giroscopio, más shareable)
    ========================================================= */
 
 const $  = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
-const STORAGE_KEY = 'herocard.v2';
+const STORAGE_KEY = 'herocard.v3';
 
 const toast = (msg, ms=2200) => {
   const el = $('#toast');
@@ -900,18 +973,11 @@ const toast = (msg, ms=2200) => {
   toast._t = setTimeout(() => el.classList.remove('show'), ms);
 };
 
-/* ---- Estado ---- */
 let state = {
-  name: '',
-  sport: 'Running',
-  metric: 0,
-  unit: 'km',
-  time: '',
-  emoji: '🔥',
-  photo: null
+  name: '', sport: 'Running', metric: 0, unit: 'km',
+  time: '', emoji: '🔥', photo: null
 };
 
-/* ---- Persistencia ---- */
 (function restore() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -923,17 +989,8 @@ let state = {
 })();
 
 /* =========================================================
-   DICCIONARIO DE DEPORTES
-   ---------------------------------------------------------
-   Cada deporte define:
-   - type/typeDark: colores del borde exterior y la energía
-   - iconPath: path SVG (viewBox 0 0 24 24) del icono del tipo
-   - attack: nombre del ataque (estilo TCG)
-   - flavor: descripción corta del ataque
-   - typeLabel: nombre del "tipo" (como "Corredor")
+   Iconos SVG de tipos (viewBox 24x24)
    ========================================================= */
-
-/* Iconos SVG limpios, estilo silueta plana (viewBox 24x24) */
 const ICONS = {
   run:    'M13.5 5.5a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM9.8 8.9 7 10.3V14h2v-2.2l1.8-.7.9 1.4L8.5 15l-.6 3 1.9.4.6-3 2.4-1 .9 3.1L16 17 14 10.5l-1.9-2L10 7.5z',
   bike:   'M5 17.5a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm14 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM9 5h4v2l3 4h3l-1.5 5.5-1.4-.4L17 11h-2l-3-4V5z',
@@ -947,35 +1004,130 @@ const ICONS = {
   yoga:   'M12 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-5 6c0 3 2 5 5 5s5-2 5-5M6 20c2-2 4-2 6-2s4 0 6 2M8 15l-2 5m10-5 2 5'
 };
 
+/* =========================================================
+   DICCIONARIO DE DEPORTES con MÚLTIPLES ATAQUES
+   ---------------------------------------------------------
+   Cada deporte tiene un array de ataques. Al generar, uno
+   se escoge aleatoriamente. Añade rejugabilidad: la misma
+   métrica puede dar cartas distintas.
+   ========================================================= */
 const SPORT_DATA = {
-  'Running':     { type: '#ff4d2e', typeDark: '#8a1a0a', icon: ICONS.run,   attack: 'Ataque Rápido',   flavor: 'Velocidad pura. Nada te frena.',               typeLabel: 'Corredor' },
-  'Ciclismo':    { type: '#2ed573', typeDark: '#0e5c2e', icon: ICONS.bike,  attack: 'Ráfaga Giratoria', flavor: 'Pedaladas que parten el asfalto.',              typeLabel: 'Ciclista' },
-  'Crossfit':    { type: '#ff6b35', typeDark: '#7a2e0a', icon: ICONS.cross, attack: 'Combo WOD',        flavor: 'Un golpe. Dos golpes. No para.',                typeLabel: 'Atleta Funcional' },
-  'Calistenia':  { type: '#ffc107', typeDark: '#7a5a00', icon: ICONS.gym,   attack: 'Dominada Letal',   flavor: 'El peso del cuerpo como arma.',                 typeLabel: 'Gimnasta' },
-  'Powerlifting':{ type: '#8b0000', typeDark: '#3d0000', icon: ICONS.lift,  attack: 'Peso Muerto',      flavor: 'Levanta lo imposible y vuelve a intentarlo.',   typeLabel: 'Titán' },
-  'Natación':    { type: '#1e9ce8', typeDark: '#0a3d66', icon: ICONS.swim,  attack: 'Hidro Bomba',      flavor: 'El agua se aparta a su paso.',                  typeLabel: 'Nadador' },
-  'Trail':       { type: '#6a3410', typeDark: '#2a1404', icon: ICONS.trail, attack: 'Salto de Montaña', flavor: 'Conquista la cumbre, desafía la gravedad.',     typeLabel: 'Explorador' },
-  'Padel':       { type: '#00c6a7', typeDark: '#00614f', icon: ICONS.padel, attack: 'Remate Smash',     flavor: 'La pelota nunca vuelve.',                       typeLabel: 'Raqueta' },
-  'Boxeo':       { type: '#c9302c', typeDark: '#5c0e0b', icon: ICONS.box,   attack: 'Uppercut Final',   flavor: 'Un golpe. Un KO. Se acabó.',                     typeLabel: 'Luchador' },
-  'Yoga':        { type: '#b14bff', typeDark: '#4a0e7a', icon: ICONS.yoga,  attack: 'Flujo Zen',        flavor: 'Equilibrio perfecto. Mente intocable.',          typeLabel: 'Asceta' }
+  'Running': {
+    type: '#ff4d2e', typeDark: '#8a1a0a', icon: ICONS.run, typeLabel: 'Corredor',
+    attacks: [
+      { name: 'Ataque Rápido',    flavor: 'Velocidad pura. Nada te frena.' },
+      { name: 'Sprint Final',     flavor: 'Los últimos 100m son tuyos.' },
+      { name: 'Zancada Feroz',    flavor: 'El suelo tiembla a cada paso.' },
+      { name: 'Segundo Aire',     flavor: 'Cuando otros paran, tú aceleras.' },
+      { name: 'Ritmo Implacable', flavor: 'Lo que no te mata, te da PB.' }
+    ]
+  },
+  'Ciclismo': {
+    type: '#2ed573', typeDark: '#0e5c2e', icon: ICONS.bike, typeLabel: 'Ciclista',
+    attacks: [
+      { name: 'Ráfaga Giratoria',  flavor: 'Pedaladas que parten el asfalto.' },
+      { name: 'Ataque en Subida',  flavor: 'La montaña no sabe lo que le espera.' },
+      { name: 'Escapada Solitaria', flavor: 'Te fuiste y nadie pudo seguirte.' },
+      { name: 'Sprint Final',      flavor: 'A 60km/h. Sin piedad.' },
+      { name: 'Vatímetro Rojo',    flavor: 'Potencia máxima, sin plan B.' }
+    ]
+  },
+  'Crossfit': {
+    type: '#ff6b35', typeDark: '#7a2e0a', icon: ICONS.cross, typeLabel: 'Atleta Funcional',
+    attacks: [
+      { name: 'Combo WOD',         flavor: 'Un golpe. Dos golpes. No para.' },
+      { name: 'Burpee Infernal',   flavor: 'Cada rep te acerca al cielo.' },
+      { name: 'Thruster Devastador', flavor: 'Pesas arriba. Alma abajo.' },
+      { name: 'AMRAP Sin Fin',     flavor: 'Tantas como puedas. Y luego una más.' },
+      { name: 'Murph Mode',        flavor: 'Solo los valientes llegan al final.' }
+    ]
+  },
+  'Calistenia': {
+    type: '#ffc107', typeDark: '#7a5a00', icon: ICONS.gym, typeLabel: 'Gimnasta',
+    attacks: [
+      { name: 'Dominada Letal',    flavor: 'El peso del cuerpo como arma.' },
+      { name: 'Muscle-Up Explosivo', flavor: 'De la barra al cielo en un parpadeo.' },
+      { name: 'Pistol Squat',      flavor: 'Una pierna. Control total.' },
+      { name: 'Planche Imposible', flavor: 'Gravedad, hoy no puedes conmigo.' },
+      { name: 'Front Lever',       flavor: 'Equilibrio perfecto. Fuerza bruta.' }
+    ]
+  },
+  'Powerlifting': {
+    type: '#8b0000', typeDark: '#3d0000', icon: ICONS.lift, typeLabel: 'Titán',
+    attacks: [
+      { name: 'Peso Muerto',       flavor: 'Levanta lo imposible. Repite.' },
+      { name: 'Sentadilla Bestial', flavor: 'Hasta el fondo. Sin miedo.' },
+      { name: 'Press de Banca',    flavor: 'Empuja. La barra obedece.' },
+      { name: 'PR Demoledor',      flavor: 'El récord anterior ya es historia.' },
+      { name: 'Lockout Absoluto',  flavor: 'Lo bloqueas. Se acabó.' }
+    ]
+  },
+  'Natación': {
+    type: '#1e9ce8', typeDark: '#0a3d66', icon: ICONS.swim, typeLabel: 'Nadador',
+    attacks: [
+      { name: 'Hidro Bomba',       flavor: 'El agua se aparta a su paso.' },
+      { name: 'Mariposa Letal',    flavor: 'Dos brazadas. Dos metros ganados.' },
+      { name: 'Estilo Libre Total', flavor: 'Velocidad que no conoce el cansancio.' },
+      { name: 'Viraje Perfecto',   flavor: 'Toca la pared. Sale como un torpedo.' },
+      { name: 'Buceo Prolongado',  flavor: 'Cuando emerge, ya ha ganado.' }
+    ]
+  },
+  'Trail': {
+    type: '#6a3410', typeDark: '#2a1404', icon: ICONS.trail, typeLabel: 'Explorador',
+    attacks: [
+      { name: 'Salto de Montaña',  flavor: 'Conquista la cumbre, desafía la gravedad.' },
+      { name: 'Descenso Técnico',  flavor: 'Cada piedra es una decisión.' },
+      { name: 'Subida Brutal',     flavor: 'Las piernas arden. La mente no cede.' },
+      { name: 'Cresta del Filo',   flavor: 'Un paso en falso no está permitido.' },
+      { name: 'Ultra Resistencia', flavor: 'Cuando otros paran, tú sigues 50km más.' }
+    ]
+  },
+  'Padel': {
+    type: '#00c6a7', typeDark: '#00614f', icon: ICONS.padel, typeLabel: 'Raqueta',
+    attacks: [
+      { name: 'Remate Smash',      flavor: 'La pelota nunca vuelve.' },
+      { name: 'Víbora Cruzada',    flavor: 'Sale baja. Pica. Muerde.' },
+      { name: 'Bandeja Perfecta',  flavor: 'Control y precisión en un solo golpe.' },
+      { name: 'Globo Defensivo',   flavor: 'Los saca del punto. Y del partido.' },
+      { name: 'Chiquita Imposible', flavor: 'Pegada al cristal. Imposible de devolver.' }
+    ]
+  },
+  'Boxeo': {
+    type: '#c9302c', typeDark: '#5c0e0b', icon: ICONS.box, typeLabel: 'Luchador',
+    attacks: [
+      { name: 'Uppercut Final',    flavor: 'Un golpe. Un KO. Se acabó.' },
+      { name: 'Jab Demoledor',     flavor: 'Rápido. Preciso. Letal.' },
+      { name: 'Combinación 1-2',   flavor: 'Directo e izquierda. Clásico y brutal.' },
+      { name: 'Gancho al Hígado',  flavor: 'El dolor lento de los campeones.' },
+      { name: 'Hook Explosivo',    flavor: 'Rota cadera. Rota defensa. Rota rival.' }
+    ]
+  },
+  'Yoga': {
+    type: '#b14bff', typeDark: '#4a0e7a', icon: ICONS.yoga, typeLabel: 'Asceta',
+    attacks: [
+      { name: 'Flujo Zen',         flavor: 'Equilibrio perfecto. Mente intocable.' },
+      { name: 'Postura del Cuervo', flavor: 'Solo las manos tocan el suelo.' },
+      { name: 'Saludo al Sol',     flavor: 'Cuerpo y respiración, una sola cosa.' },
+      { name: 'Meditación Profunda', flavor: 'Presencia total. Nada más existe.' },
+      { name: 'Inversión Completa', flavor: 'El mundo al revés. La mente en paz.' }
+    ]
+  }
 };
 
-/* Helper para construir un <svg> inline a partir de un path */
 function svgIcon(path) {
   return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="${path}"/></svg>`;
 }
 
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 /* =========================================================
-   Motor de Rareza + Damage + HP
-   ---------------------------------------------------------
-   Damage y HP escalan con la métrica como antes hacía el
-   Power Score, pero se redondean a múltiplos de 10 para
-   respetar el aire de Pokémon TCG (20, 30, 50, 80, 120...).
+   Stats engine · rareza + damage + HP
    ========================================================= */
 function computeStats(metric, unit, timeStr) {
   const m = parseFloat(metric) || 0;
 
-  // Umbrales por unidad: [common<, elite<, epic<, legendary>=]
   const thresholds = {
     km:   [5, 10, 21, 42],
     kg:   [40, 100, 180, 250],
@@ -991,61 +1143,66 @@ function computeStats(metric, unit, timeStr) {
   else if (m >= t[1]) rarity = 'elite';
   else                rarity = 'common';
 
-  // Damage: curva sqrt, redondeado a múltiplos de 10. Bonus si hay tiempo.
   const topRef = t[3] * 1.25;
   let raw = Math.sqrt(Math.min(m, topRef) / topRef) * 150;
   if (timeStr && timeStr.trim()) raw += 10;
   let damage = Math.round(raw / 10) * 10;
   damage = Math.max(10, Math.min(150, damage));
 
-  // HP: mayor que damage (como en Pokémon). Múltiplos de 10.
   let hp = Math.round((damage * 1.6 + 50) / 10) * 10;
   hp = Math.max(60, Math.min(240, hp));
 
   return { rarity, damage, hp };
 }
 
+/* Achievement copy para cada rareza (la parte que grita "compárteme") */
+const ACHIEVEMENT = {
+  common:    { label: 'NEW RECORD',        sub: 'Tu racha empieza aquí' },
+  elite:     { label: 'ELITE UNLOCKED',    sub: 'Top 30% de atletas como tú' },
+  epic:      { label: 'EPIC PERFORMANCE',  sub: 'Top 10% · menos de 1 entre 10' },
+  legendary: { label: 'LEGENDARY STATUS',  sub: 'Top 1% · hoy eres historia' }
+};
+
 /* =========================================================
-   Render de la carta TCG
+   Render
    ========================================================= */
 function renderCard() {
   const { rarity, damage, hp } = computeStats(state.metric, state.unit, state.time);
   const sport = SPORT_DATA[state.sport] || SPORT_DATA['Running'];
+  const attack = pickRandom(sport.attacks);  // ← aleatorio en cada render
 
-  // Aplicar color del tipo como CSS var
   const root = document.documentElement.style;
   root.setProperty('--type', sport.type);
   root.setProperty('--type-dark', sport.typeDark);
-  root.setProperty('--type-soft', sport.type + '59'); // ~35% alpha aprox
+  root.setProperty('--type-soft', sport.type + '73');
 
-  // Campos
   $('#c-name').textContent   = (state.name || 'Tu Nombre');
   $('#c-hp').textContent     = hp;
   $('#c-subheader').textContent = `${sport.typeLabel} · ${state.sport}`;
   $('#c-typebadge').innerHTML = svgIcon(sport.icon);
   $('#c-cost').innerHTML      = `<div class="energy">${svgIcon(sport.icon)}</div>`;
-  $('#c-attack').textContent = sport.attack;
-  $('#c-flavor').textContent = sport.flavor;
+  $('#c-attack').textContent = attack.name;
+  $('#c-flavor').textContent = attack.flavor;
   $('#c-damage').textContent = damage;
 
-  // Descripción tipo flavor
   const d = new Date();
   const pad = n => String(n).padStart(2, '0');
   const fecha = `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${String(d.getFullYear()).slice(2)}`;
   const metricTxt = state.metric ? `${formatNum(state.metric)} ${state.unit}` : '—';
-  const timeTxt = state.time.trim() ? ` · Tiempo: ${state.time.trim()}` : '';
-  $('#c-desc').textContent = `Registro: ${metricTxt}${timeTxt} · ${fecha}`;
+  const timeTxt = state.time.trim() ? ` · ${state.time.trim()}` : '';
+  $('#c-desc').textContent = `${metricTxt}${timeTxt} · ${fecha}`;
 
-  // Rareza
-  const rarityLabel = { common: 'COMMON', elite: 'ELITE', epic: 'EPIC', legendary: 'LEGENDARY' }[rarity];
-  $('#c-rarity').textContent = rarityLabel;
+  // Achievement badge (pieza compartible)
+  const ach = ACHIEVEMENT[rarity];
+  $('#c-ach-label').textContent = ach.label;
+  $('#c-ach-sub').textContent   = ach.sub;
+
   $('#hero-card').dataset.rarity = rarity;
 
-  // ID coleccionable
   const sportCode = state.sport.substring(0, 3).toUpperCase();
-  $('#c-id').textContent = `N.º ${sportCode}-${String(damage).padStart(3, '0')} / ∞ ${state.emoji}`;
+  $('#c-id').textContent = `N.º ${sportCode}-${String(damage).padStart(3, '0')} ${state.emoji}`;
 
-  // Foto del usuario como ilustración central
+  // Foto
   const photoEl = $('#c-photo');
   const placeholderEl = $('#c-placeholder');
   if (state.photo) {
@@ -1059,8 +1216,7 @@ function renderCard() {
     placeholderEl.textContent = (state.name || '?').trim().charAt(0).toUpperCase() || '?';
   }
 
-  // Partículas legendary
-  renderParticles(rarity === 'legendary' ? 20 : 0);
+  renderParticles(rarity === 'legendary' ? 24 : 0);
 }
 
 function formatNum(n) {
@@ -1085,128 +1241,12 @@ function renderParticles(count) {
 }
 
 /* =========================================================
-   Inclinación 3D + Holograma (idéntico a v1)
-   ========================================================= */
-const card   = $('#hero-card');
-const stage  = $('#stage');
-const holo   = $('#holo');
-const gloss  = $('#gloss');
-
-let tilt = { x: 0, y: 0 };
-let tiltCur = { x: 0, y: 0 };
-const MAX_TILT = 14;
-
-function applyTilt() {
-  tiltCur.x += (tilt.x - tiltCur.x) * 0.12;
-  tiltCur.y += (tilt.y - tiltCur.y) * 0.12;
-
-  card.style.transform = `rotateX(${tiltCur.x.toFixed(2)}deg) rotateY(${tiltCur.y.toFixed(2)}deg)`;
-
-  const hx = 50 + tiltCur.y * 3;
-  const hy = 50 + tiltCur.x * 3;
-  holo.style.backgroundPosition = `${hx}% ${hy}%`;
-
-  const mx = 50 + tiltCur.y * 2.5;
-  const my = 50 - tiltCur.x * 2.5;
-  gloss.style.setProperty('--mx', `${mx}%`);
-  gloss.style.setProperty('--my', `${my}%`);
-
-  requestAnimationFrame(applyTilt);
-}
-requestAnimationFrame(applyTilt);
-
-stage.addEventListener('mousemove', (e) => {
-  const r = stage.getBoundingClientRect();
-  const px = (e.clientX - r.left) / r.width;
-  const py = (e.clientY - r.top)  / r.height;
-  tilt.y = (px - 0.5) *  MAX_TILT * 2;
-  tilt.x = (0.5 - py) *  MAX_TILT * 2;
-  card.classList.add('is-active');
-
-  gloss.style.setProperty('--mx', `${px * 100}%`);
-  gloss.style.setProperty('--my', `${py * 100}%`);
-});
-stage.addEventListener('mouseleave', () => {
-  tilt.x = 0; tilt.y = 0;
-  card.classList.remove('is-active');
-});
-
-/* =========================================================
-   Giroscopio (móvil)
-   ---------------------------------------------------------
-   - iOS 13+: requiere permiso explícito tras gesto del usuario.
-     Mostramos un botón "Activar efecto 3D" para pedir el permiso.
-   - Android: se activa automáticamente.
-   ========================================================= */
-function handleOrientation(ev) {
-  const beta  = ev.beta  || 0;
-  const gamma = ev.gamma || 0;
-  const normX = Math.max(-MAX_TILT, Math.min(MAX_TILT, (beta - 45) * 0.5));
-  const normY = Math.max(-MAX_TILT, Math.min(MAX_TILT, gamma * 0.6));
-  tilt.x = normX;
-  tilt.y = normY;
-  card.classList.add('is-active');
-}
-
-const gyroBtn = $('#gyroBtn');
-let gyroActive = false;
-
-function activateGyroAndroid() {
-  window.addEventListener('deviceorientation', handleOrientation);
-  gyroActive = true;
-}
-
-function needsIOSPermission() {
-  return typeof DeviceOrientationEvent !== 'undefined' &&
-         typeof DeviceOrientationEvent.requestPermission === 'function';
-}
-
-function isMobile() {
-  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-         (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
-}
-
-function setupGyro() {
-  if (typeof DeviceOrientationEvent === 'undefined') return;
-
-  if (needsIOSPermission()) {
-    // iOS 13+: mostrar botón para pedir permiso tras tap
-    gyroBtn.classList.add('visible');
-    gyroBtn.addEventListener('click', async () => {
-      try {
-        const resp = await DeviceOrientationEvent.requestPermission();
-        if (resp === 'granted') {
-          window.addEventListener('deviceorientation', handleOrientation);
-          gyroActive = true;
-          gyroBtn.classList.add('active');
-          gyroBtn.textContent = 'Efecto 3D activado ✓';
-          toast('Inclina el móvil para ver el holograma');
-          setTimeout(() => gyroBtn.classList.remove('visible'), 2500);
-        } else {
-          toast('Permiso denegado. Actívalo en Ajustes › Safari › Movimiento');
-        }
-      } catch (err) {
-        console.error(err);
-        toast('No se pudo activar el efecto 3D');
-      }
-    });
-  } else if (isMobile()) {
-    // Android / otros móviles: activación automática
-    activateGyroAndroid();
-  }
-}
-setupGyro();
-
-/* =========================================================
    Form handlers
    ========================================================= */
 const form = {
-  name:   $('#f-name'),
-  sport:  $('#f-sport'),
-  metric: $('#f-metric'),
-  unit:   $('#f-unit'),
-  time:   $('#f-time'),
-  photo:  $('#f-photo')
+  name:   $('#f-name'), sport:  $('#f-sport'),
+  metric: $('#f-metric'), unit: $('#f-unit'),
+  time:   $('#f-time'), photo: $('#f-photo')
 };
 
 function readForm() {
@@ -1248,8 +1288,23 @@ $('#btnGenerate').addEventListener('click', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ name: state.name, photo: state.photo }));
   } catch(e) {}
 
+  // Revelar carta con animación + mostrar toolbar y hint
+  const stage = $('#stage');
+  stage.classList.remove('hidden');
+  // Forzamos reflow para reiniciar la animación si se pulsa Generar varias veces
+  stage.classList.remove('revealing');
+  void stage.offsetWidth;
+  stage.classList.add('revealing');
+
+  $('#toolbar').classList.remove('hidden');
+  $('#hint').classList.remove('hidden');
+
   $('#formWrap').classList.add('collapsed');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Scroll suave a la carta para enfocar la atención
+  setTimeout(() => {
+    stage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
 });
 
 $('#btnClear').addEventListener('click', () => {
@@ -1260,6 +1315,13 @@ $('#btnClear').addEventListener('click', () => {
   state.photo = null;
   $('#photoPreview').style.backgroundImage = '';
   localStorage.removeItem(STORAGE_KEY);
+
+  // Ocultar carta, toolbar y hint
+  $('#stage').classList.add('hidden');
+  $('#stage').classList.remove('revealing');
+  $('#toolbar').classList.add('hidden');
+  $('#hint').classList.add('hidden');
+
   toast('Reseteado');
 });
 
@@ -1271,6 +1333,8 @@ $('#btnEdit').addEventListener('click', () => {
 /* =========================================================
    BOTÓN VIRAL · html2canvas + Web Share API
    ========================================================= */
+const card = $('#hero-card');
+
 $('#btnShare').addEventListener('click', async () => {
   const btn = $('#btnShare');
   btn.disabled = true;
@@ -1279,7 +1343,7 @@ $('#btnShare').addEventListener('click', async () => {
 
   try {
     card.classList.add('capturing');
-    await new Promise(r => setTimeout(r, 60));
+    await new Promise(r => setTimeout(r, 80));
 
     const canvas = await html2canvas(card, {
       backgroundColor: null,
@@ -1302,7 +1366,7 @@ $('#btnShare').addEventListener('click', async () => {
       await navigator.share({
         files: [file],
         title: 'Mi HeroCard',
-        text: `${state.name} usó ${sport.attack} · ${formatNum(state.metric)} ${state.unit} ${state.emoji}`
+        text: `${state.name} · ${state.sport} · ${formatNum(state.metric)} ${state.unit} ${state.emoji}`
       });
       toast('Compartido ✓');
     } else {
@@ -1326,9 +1390,7 @@ $('#btnShare').addEventListener('click', async () => {
   }
 });
 
-/* Render inicial */
-state.metric = 10;
-renderCard();
+/* No hay render inicial: la carta solo aparece cuando el usuario pulsa Generar */
 </script>
 </body>
 </html>
