@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#05060a" />
+<title>HeroCard — Coleccionables Deportivos</title>
+
+<!-- html2canvas desde CDN para exportar la carta como imagen PNG -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<!-- Tipografías: Orbitron (display futurista) + Space Mono (mono técnico) + Archivo Black (impacto) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Space+Mono:wght@400;700&family=Archivo+Black&display=swap" rel="stylesheet">
+
+<style>
+/* =========================================================
+   HeroCard · Design Tokens
+   ========================================================= */
+:root {
+  --bg-0: #05060a;
+  --bg-1: #0b0d16;
+  --bg-2: #111526;
+  --ink: #f4f6ff;
+  --ink-dim: #8a90ad;
+  --line: rgba(255,255,255,.08);
+
+  /* Acentos por rareza */
+  --common: #6b7280;
+  --elite:  #00e0ff;
+  --epic:   #b14bff;
+  --legendary: #ffb020;
+
+  /* Acento activo (lo cambia JS según rareza) */
+  --accent: var(--elite);
+  --accent-soft: rgba(0, 224, 255, .35);
+  --accent-glow: 0 0 40px rgba(0,224,255,.55), 0 0 120px rgba(0,224,255,.25);
+
+  --card-w: min(92vw, 380px);
+  --card-h: calc(var(--card-w) * 1.55);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(177,75,255,.18), transparent 60%),
+    radial-gradient(900px 500px at 90% 10%, rgba(0,224,255,.15), transparent 60%),
+    radial-gradient(800px 500px at 50% 120%, rgba(255,176,32,.12), transparent 60%),
+    var(--bg-0);
+  color: var(--ink);
+  font-family: 'Space Mono', ui-monospace, monospace;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* Grilla decorativa de fondo, muy sutil */
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ruido sutil para romper la limpieza de IA */
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: .06;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.9'/></svg>");
+}
+
+.app {
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 20px 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  align-items: center;
+}
+
+/* =========================================================
+   Header
+   ========================================================= */
+header.brand {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.logo {
+  font-family: 'Archivo Black', sans-serif;
+  letter-spacing: .02em;
+  font-size: 20px;
+  text-transform: uppercase;
+}
+.logo span {
+  color: var(--accent);
+  text-shadow: 0 0 12px var(--accent-soft);
+}
+.tag {
+  font-size: 10px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+/* =========================================================
+   Form
+   ========================================================= */
+.form-wrap {
+  width: 100%;
+  max-width: 520px;
+  backdrop-filter: blur(14px) saturate(130%);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+  background: linear-gradient(180deg, rgba(20,22,36,.7), rgba(10,12,20,.55));
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 22px 22px 18px;
+  box-shadow: 0 40px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
+  transition: opacity .35s ease, transform .35s ease, max-height .4s ease, padding .35s ease, margin .35s ease;
+  overflow: hidden;
+}
+.form-wrap.collapsed {
+  opacity: 0;
+  transform: translateY(-10px);
+  max-height: 0;
+  padding: 0 22px;
+  margin: 0;
+  pointer-events: none;
+  border-color: transparent;
+}
+
+.form-title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  letter-spacing: .18em;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin: 0 0 14px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.grid .full { grid-column: 1 / -1; }
+
+label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin: 0 0 6px 2px;
+}
+
+input, select {
+  width: 100%;
+  background: rgba(5,6,10,.55);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: 500 14px/1.2 'Space Mono', monospace;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s, background .2s;
+}
+input:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--ink-dim) 50%), linear-gradient(135deg, var(--ink-dim) 50%, transparent 50%); background-position: calc(100% - 18px) 18px, calc(100% - 13px) 18px; background-size: 5px 5px; background-repeat: no-repeat; }
+
+.emoji-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.emoji-row button {
+  flex: 1 1 auto;
+  min-width: 48px;
+  aspect-ratio: 1 / 1;
+  font-size: 22px;
+  background: rgba(5,6,10,.55);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform .15s, border-color .2s, background .2s;
+}
+.emoji-row button:hover { transform: translateY(-1px); }
+.emoji-row button.active {
+  border-color: var(--accent);
+  background: rgba(255,255,255,.04);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.photo-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.photo-input .preview {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 1px dashed var(--line);
+  background: rgba(5,6,10,.55) center/cover no-repeat;
+  flex-shrink: 0;
+}
+.photo-input label.file-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  background: rgba(5,6,10,.4);
+  margin: 0;
+}
+.photo-input input[type="file"] { display: none; }
+
+.actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  position: relative;
+  border: none;
+  cursor: pointer;
+  padding: 14px 18px;
+  border-radius: 12px;
+  font: 700 12px/1 'Orbitron', sans-serif;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  transition: transform .15s ease, box-shadow .25s ease, background .25s ease;
+  color: #000;
+  background: var(--accent);
+  box-shadow: 0 10px 30px var(--accent-soft), inset 0 1px 0 rgba(255,255,255,.4);
+  flex: 1;
+  min-width: 160px;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+.btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+.btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+/* =========================================================
+   Stage & Card
+   ========================================================= */
+.stage {
+  perspective: 1400px;
+  width: var(--card-w);
+  height: var(--card-h);
+  position: relative;
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  transform-style: preserve-3d;
+  transition: transform .18s ease-out;
+  will-change: transform;
+
+  /* Fondo base de la carta: degradado + textura */
+  background:
+    radial-gradient(120% 80% at 20% 0%, rgba(255,255,255,.06), transparent 60%),
+    linear-gradient(160deg, #12162a 0%, #0a0c18 55%, #05060a 100%);
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow:
+    0 30px 80px rgba(0,0,0,.55),
+    0 0 0 1px rgba(255,255,255,.04) inset,
+    var(--accent-glow);
+  overflow: hidden;
+}
+
+/* Borde animado brillante (conic gradient girando) */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 26px;
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    var(--accent) 0deg,
+    transparent 60deg,
+    var(--accent) 180deg,
+    transparent 240deg,
+    var(--accent) 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: spin 6s linear infinite;
+  opacity: .8;
+  pointer-events: none;
+  z-index: 3;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Capa HOLOGRÁFICA — gradiente arcoíris + blend mode. Se mueve con JS. */
+.card .holo {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  pointer-events: none;
+  z-index: 4;
+  mix-blend-mode: color-dodge;
+  opacity: .55;
+  background:
+    linear-gradient(
+      115deg,
+      transparent 0%,
+      rgba(255, 0, 122, .55) 20%,
+      rgba(0, 224, 255, .55) 40%,
+      rgba(255, 255, 255, .65) 50%,
+      rgba(177, 75, 255, .55) 60%,
+      rgba(255, 176, 32, .55) 80%,
+      transparent 100%
+    );
+  background-size: 300% 300%;
+  background-position: 50% 50%;
+  transition: background-position .1s linear, opacity .3s ease;
+  filter: blur(1px);
+}
+
+/* Capa de brillo puntual que sigue al cursor */
+.card .gloss {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  pointer-events: none;
+  z-index: 5;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,.35), transparent 40%);
+  mix-blend-mode: overlay;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.card.is-active .gloss { opacity: 1; }
+
+/* Rayas foil (líneas diagonales muy sutiles) */
+.card .foil-lines {
+  position: absolute; inset: 0;
+  border-radius: 24px;
+  pointer-events: none;
+  z-index: 2;
+  background: repeating-linear-gradient(
+    115deg,
+    rgba(255,255,255,.03) 0 2px,
+    transparent 2px 6px
+  );
+  mix-blend-mode: screen;
+}
+
+/* Contenido de la carta */
+.card .content {
+  position: relative;
+  z-index: 6;
+  height: 100%;
+  padding: 22px 22px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Header de la carta: rareza + deporte */
+.card .header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.card .rarity-tag {
+  padding: 4px 8px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 4px;
+  font-weight: 700;
+  background: rgba(0,0,0,.25);
+}
+.card .date-tag {
+  font-family: 'Space Mono', monospace;
+  letter-spacing: .1em;
+}
+
+/* Avatar hexagonal */
+.avatar {
+  margin-top: 14px;
+  width: 120px;
+  height: 138px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,.6));
+}
+.avatar .hex {
+  width: 100%; height: 100%;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, var(--accent), #fff);
+  padding: 3px;
+}
+.avatar .hex .inner {
+  width: 100%; height: 100%;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: #0a0c18 center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 44px;
+  color: var(--accent);
+}
+
+/* Power Score gigante */
+.power-wrap {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.power-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 4px;
+}
+.power-score {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: clamp(72px, 18vw, 96px);
+  letter-spacing: -.02em;
+  color: var(--ink);
+  background: linear-gradient(180deg, #fff 0%, var(--accent) 90%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px var(--accent-soft);
+  line-height: .9;
+}
+
+/* Nombre + deporte */
+.identity {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.identity .name {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 22px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.identity .sport {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.identity .mood {
+  font-size: 22px;
+  margin-top: 4px;
+}
+
+/* Stats banda inferior */
+.stats {
+  margin-top: auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 0;
+  padding: 12px 10px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,.35));
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.stat .v {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 18px;
+  letter-spacing: .02em;
+  color: var(--ink);
+}
+.stat .k {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.stats .sep { background: rgba(255,255,255,.1); height: 100%; }
+
+/* Partículas legendarias */
+.particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 7;
+  display: none;
+}
+.card[data-rarity="legendary"] .particles { display: block; }
+.particles i {
+  position: absolute;
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  opacity: 0;
+  animation: rise linear infinite;
+}
+@keyframes rise {
+  0%   { transform: translateY(100%) scale(.6); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translateY(-20%) scale(1); opacity: 0; }
+}
+
+/* =========================================================
+   Bottom toolbar (botones fuera de la carta)
+   ========================================================= */
+.toolbar {
+  display: flex;
+  gap: 10px;
+  width: var(--card-w);
+  flex-wrap: wrap;
+}
+.toolbar .btn { flex: 1 1 140px; }
+
+/* Botón viral destacado con lustre */
+.btn.viral {
+  background: linear-gradient(135deg, #ffb020, #ff3d7f 60%, #b14bff);
+  color: #000;
+  box-shadow: 0 10px 40px rgba(255,61,127,.4), inset 0 1px 0 rgba(255,255,255,.5);
+}
+.btn.viral::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.6) 50%, transparent 70%);
+  background-size: 250% 100%;
+  mix-blend-mode: overlay;
+  animation: shine 3.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes shine {
+  0% { background-position: 200% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Toast de feedback */
+.toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translate(-50%, 60px);
+  background: rgba(10,12,20,.9);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 20px 40px rgba(0,0,0,.5);
+  opacity: 0;
+  transition: transform .3s ease, opacity .3s ease;
+  z-index: 50;
+  max-width: 90vw;
+  text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Footer */
+footer {
+  font-size: 10px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  text-align: center;
+  padding-top: 8px;
+}
+footer .dot { color: var(--accent); }
+
+/* Mobile hint */
+.hint {
+  font-size: 10px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  text-align: center;
+}
+
+/* No transition durante captura para que html2canvas vea el estado reposo */
+.card.capturing { transition: none !important; transform: none !important; }
+.card.capturing .holo { background-position: 50% 50% !important; }
+.card.capturing .gloss { opacity: 0 !important; }
+
+@media (max-width: 520px) {
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="brand">
+    <div class="logo">HERO<span>CARD</span></div>
+    <div class="tag">v1.0 · Daily Flex</div>
+  </header>
+
+  <!-- ============ FORM ============ -->
+  <section class="form-wrap" id="formWrap">
+    <h2 class="form-title">Forja tu carta del día</h2>
+
+    <div class="grid">
+      <div>
+        <label for="f-name">Nombre</label>
+        <input id="f-name" type="text" placeholder="Ej: Rober" maxlength="18" />
+      </div>
+      <div>
+        <label for="f-sport">Deporte</label>
+        <select id="f-sport">
+          <option value="Running">Running</option>
+          <option value="Ciclismo">Ciclismo</option>
+          <option value="Crossfit">Crossfit</option>
+          <option value="Calistenia">Calistenia</option>
+          <option value="Powerlifting">Powerlifting</option>
+          <option value="Natación">Natación</option>
+          <option value="Trail">Trail</option>
+          <option value="Padel">Padel</option>
+          <option value="Boxeo">Boxeo</option>
+          <option value="Yoga">Yoga</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="f-metric">Métrica principal</label>
+        <input id="f-metric" type="number" inputmode="decimal" step="0.01" placeholder="10" />
+      </div>
+      <div>
+        <label for="f-unit">Unidad</label>
+        <select id="f-unit">
+          <option value="km">km recorridos</option>
+          <option value="kg">kg levantados</option>
+          <option value="reps">repeticiones</option>
+          <option value="m">metros</option>
+          <option value="min">minutos</option>
+        </select>
+      </div>
+
+      <div class="full">
+        <label for="f-time">Tiempo / duración (opcional)</label>
+        <input id="f-time" type="text" placeholder="Ej: 48:20 ó 1h 15min" maxlength="14" />
+      </div>
+
+      <div class="full">
+        <label>Sentimiento</label>
+        <div class="emoji-row" id="emojiRow">
+          <button type="button" data-emoji="🔥" class="active">🔥</button>
+          <button type="button" data-emoji="💪">💪</button>
+          <button type="button" data-emoji="⚡">⚡</button>
+          <button type="button" data-emoji="😤">😤</button>
+          <button type="button" data-emoji="🧘">🧘</button>
+          <button type="button" data-emoji="🥵">🥵</button>
+          <button type="button" data-emoji="👑">👑</button>
+        </div>
+      </div>
+
+      <div class="full">
+        <label>Foto (opcional)</label>
+        <div class="photo-input">
+          <div class="preview" id="photoPreview"></div>
+          <label class="file-btn" for="f-photo">Subir foto</label>
+          <input id="f-photo" type="file" accept="image/*" />
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="btnGenerate">Generar Mi HeroCard</button>
+      <button class="btn ghost" id="btnClear">Reset</button>
+    </div>
+  </section>
+
+  <!-- ============ CARD ============ -->
+  <div class="stage" id="stage">
+    <article class="card" id="hero-card" data-rarity="elite">
+      <div class="foil-lines"></div>
+      <div class="holo" id="holo"></div>
+      <div class="gloss" id="gloss"></div>
+      <div class="particles" id="particles"></div>
+
+      <div class="content">
+        <div class="header">
+          <span class="rarity-tag" id="c-rarity">ELITE</span>
+          <span class="date-tag" id="c-date">00.00.00</span>
+        </div>
+
+        <div class="avatar">
+          <div class="hex">
+            <div class="inner" id="c-avatar">R</div>
+          </div>
+        </div>
+
+        <div class="power-wrap">
+          <div class="power-label">Power Score</div>
+          <div class="power-score" id="c-power">000</div>
+        </div>
+
+        <div class="identity">
+          <div class="name" id="c-name">TU NOMBRE</div>
+          <div class="sport" id="c-sport">DEPORTE</div>
+          <div class="mood" id="c-mood">🔥</div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="v" id="c-metric">10 km</div>
+            <div class="k">Métrica</div>
+          </div>
+          <div class="sep"></div>
+          <div class="stat">
+            <div class="v" id="c-time">—</div>
+            <div class="k">Tiempo</div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <!-- ============ TOOLBAR ============ -->
+  <div class="toolbar">
+    <button class="btn ghost" id="btnEdit">Editar</button>
+    <button class="btn viral" id="btnShare">Presumir en Stories</button>
+  </div>
+
+  <p class="hint">Inclina tu móvil para ver el efecto holográfico · En escritorio mueve el ratón sobre la carta</p>
+
+  <footer>RK Palanca Fontestad <span class="dot">●</span> HeroCard · hecho para presumir</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   HeroCard · App Logic (vanilla JS)
+   ========================================================= */
+
+/* ---- Utilidades ---- */
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const STORAGE_KEY = 'herocard.v1';
+
+const toast = (msg, ms=2200) => {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove('show'), ms);
+};
+
+/* ---- Estado ---- */
+let state = {
+  name: '',
+  sport: 'Running',
+  metric: 0,
+  unit: 'km',
+  time: '',
+  emoji: '🔥',
+  photo: null   // dataURL
+};
+
+/* ---- Persistencia: cargamos nombre + foto si existen ---- */
+(function restore() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (saved.name)  { $('#f-name').value = saved.name;  state.name = saved.name; }
+    if (saved.photo) { state.photo = saved.photo; $('#photoPreview').style.backgroundImage = `url(${saved.photo})`; }
+  } catch (e) { /* noop */ }
+})();
+
+/* =========================================================
+   Motor de Rareza + Power Score
+   ---------------------------------------------------------
+   La idea: convertir la métrica en un score 0-99 dependiendo
+   del tipo de unidad, y asignar una rareza basada en tramos.
+   Los umbrales son opinados pero razonables para uso amateur.
+   ========================================================= */
+function computeRarityAndScore(metric, unit, timeStr) {
+  const m = parseFloat(metric) || 0;
+
+  // Umbrales por unidad: [common<, elite<, epic<, legendary>=]
+  const thresholds = {
+    km:   [5, 10, 21, 42],     // running / ciclismo (un poco inflado para ciclo pero vale)
+    kg:   [40, 100, 180, 250], // peso levantado
+    reps: [20, 60, 120, 200],
+    m:    [100, 500, 1500, 3000],
+    min:  [15, 45, 90, 180]
+  };
+
+  const t = thresholds[unit] || thresholds.km;
+  let rarity = 'common';
+  if (m >= t[3])      rarity = 'legendary';
+  else if (m >= t[2]) rarity = 'epic';
+  else if (m >= t[1]) rarity = 'elite';
+  else                rarity = 'common';
+
+  // Score 0-99, escalado logarítmicamente respecto al umbral legendary.
+  // Evita quedarse siempre en 99: usamos sqrt para una curva agradable.
+  const topRef = t[3] * 1.25;
+  let score = Math.round(Math.sqrt(Math.min(m, topRef) / topRef) * 99);
+  score = Math.max(1, Math.min(99, score));
+
+  // Bonus sutil si hay tiempo declarado (esfuerzo trackeado)
+  if (timeStr && timeStr.trim()) score = Math.min(99, score + 2);
+
+  return { rarity, score };
+}
+
+/* =========================================================
+   Render de la carta
+   ========================================================= */
+const RARITY_META = {
+  common:    { label: 'COMMON',    accent: '#8a90ad', soft: 'rgba(138,144,173,.35)',  glow: '0 0 30px rgba(138,144,173,.4)' },
+  elite:     { label: 'ELITE',     accent: '#00e0ff', soft: 'rgba(0,224,255,.35)',    glow: '0 0 40px rgba(0,224,255,.55), 0 0 120px rgba(0,224,255,.25)' },
+  epic:      { label: 'EPIC',      accent: '#b14bff', soft: 'rgba(177,75,255,.35)',   glow: '0 0 40px rgba(177,75,255,.55), 0 0 120px rgba(177,75,255,.25)' },
+  legendary: { label: 'LEGENDARY', accent: '#ffb020', soft: 'rgba(255,176,32,.45)',   glow: '0 0 50px rgba(255,176,32,.65), 0 0 140px rgba(255,176,32,.3)'  }
+};
+
+function renderCard() {
+  const { rarity, score } = computeRarityAndScore(state.metric, state.unit, state.time);
+  const meta = RARITY_META[rarity];
+
+  // Aplicar colores de rareza como CSS vars (afectan a bordes, glow, avatar, etc.)
+  const root = document.documentElement.style;
+  root.setProperty('--accent', meta.accent);
+  root.setProperty('--accent-soft', meta.soft);
+  root.setProperty('--accent-glow', meta.glow);
+
+  // Campos
+  $('#c-rarity').textContent = meta.label;
+  $('#c-power').textContent  = String(score).padStart(2, '0');
+  $('#c-name').textContent   = (state.name || 'TU NOMBRE').toUpperCase();
+  $('#c-sport').textContent  = state.sport.toUpperCase();
+  $('#c-mood').textContent   = state.emoji;
+
+  // Métrica formateada
+  const formattedMetric = state.metric
+    ? `${formatNum(state.metric)} ${state.unit}`
+    : '—';
+  $('#c-metric').textContent = formattedMetric;
+  $('#c-time').textContent   = state.time.trim() || '—';
+
+  // Fecha DD.MM.YY
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  $('#c-date').textContent = `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${String(d.getFullYear()).slice(2)}`;
+
+  // Avatar: foto o inicial
+  const av = $('#c-avatar');
+  if (state.photo) {
+    av.textContent = '';
+    av.style.backgroundImage = `url(${state.photo})`;
+  } else {
+    av.style.backgroundImage = '';
+    av.textContent = (state.name || 'H').trim().charAt(0).toUpperCase();
+  }
+
+  // Rareza en el elemento para activar CSS (partículas)
+  $('#hero-card').dataset.rarity = rarity;
+
+  // Generar partículas si es legendary
+  renderParticles(rarity === 'legendary' ? 18 : 0);
+}
+
+function formatNum(n) {
+  const num = parseFloat(n);
+  if (isNaN(num)) return n;
+  // Sin decimales innecesarios
+  return (num % 1 === 0) ? String(num) : num.toFixed(2).replace(/\.?0+$/, '');
+}
+
+function renderParticles(count) {
+  const box = $('#particles');
+  box.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('i');
+    const left = Math.random() * 100;
+    const delay = Math.random() * 6;
+    const dur = 4 + Math.random() * 4;
+    const size = 2 + Math.random() * 3;
+    p.style.left = `${left}%`;
+    p.style.bottom = `-10px`;
+    p.style.width = p.style.height = `${size}px`;
+    p.style.animationDelay = `${delay}s`;
+    p.style.animationDuration = `${dur}s`;
+    box.appendChild(p);
+  }
+}
+
+/* =========================================================
+   Inclinación 3D + Holograma
+   - Desktop: mousemove sobre la carta
+   - Mobile: DeviceOrientationEvent (requiere permiso en iOS 13+)
+   ========================================================= */
+const card   = $('#hero-card');
+const stage  = $('#stage');
+const holo   = $('#holo');
+const gloss  = $('#gloss');
+
+let tilt = { x: 0, y: 0 };       // inclinación objetivo (deg)
+let tiltCur = { x: 0, y: 0 };    // inclinación actual (lerp)
+const MAX_TILT = 14;
+
+function applyTilt() {
+  tiltCur.x += (tilt.x - tiltCur.x) * 0.12;
+  tiltCur.y += (tilt.y - tiltCur.y) * 0.12;
+
+  card.style.transform = `rotateX(${tiltCur.x.toFixed(2)}deg) rotateY(${tiltCur.y.toFixed(2)}deg)`;
+
+  // Holograma: movemos background-position según inclinación
+  const hx = 50 + tiltCur.y * 3;
+  const hy = 50 + tiltCur.x * 3;
+  holo.style.backgroundPosition = `${hx}% ${hy}%`;
+
+  // Gloss: punto de luz ligado al tilt
+  const mx = 50 + tiltCur.y * 2.5;
+  const my = 50 - tiltCur.x * 2.5;
+  gloss.style.setProperty('--mx', `${mx}%`);
+  gloss.style.setProperty('--my', `${my}%`);
+
+  requestAnimationFrame(applyTilt);
+}
+requestAnimationFrame(applyTilt);
+
+/* ---- Desktop: ratón sobre la carta ---- */
+stage.addEventListener('mousemove', (e) => {
+  const r = stage.getBoundingClientRect();
+  const px = (e.clientX - r.left) / r.width;   // 0..1
+  const py = (e.clientY - r.top)  / r.height;  // 0..1
+  tilt.y = (px - 0.5) *  MAX_TILT * 2;          // rotY
+  tilt.x = (0.5 - py) *  MAX_TILT * 2;          // rotX
+  card.classList.add('is-active');
+
+  // gloss sigue al cursor exactamente (mejor feedback)
+  gloss.style.setProperty('--mx', `${px * 100}%`);
+  gloss.style.setProperty('--my', `${py * 100}%`);
+});
+stage.addEventListener('mouseleave', () => {
+  tilt.x = 0; tilt.y = 0;
+  card.classList.remove('is-active');
+});
+
+/* ---- Mobile: giroscopio ----
+   iOS 13+ requiere requestPermission tras gesto de usuario.
+   Android la mayoría lo da automáticamente.                  */
+function handleOrientation(ev) {
+  // ev.beta: -180..180 (inclinación front/back)
+  // ev.gamma: -90..90 (inclinación izq/der)
+  const beta  = ev.beta  || 0;
+  const gamma = ev.gamma || 0;
+
+  // Normalizamos alrededor de una posición cómoda de lectura (~ beta 45º)
+  const normX = Math.max(-MAX_TILT, Math.min(MAX_TILT, (beta - 45) * 0.5));
+  const normY = Math.max(-MAX_TILT, Math.min(MAX_TILT, gamma * 0.6));
+
+  tilt.x = normX;
+  tilt.y = normY;
+  card.classList.add('is-active');
+}
+
+function enableGyro() {
+  if (typeof DeviceOrientationEvent === 'undefined') return;
+
+  // iOS permission
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    // Pedimos permiso en el primer toque sobre la carta
+    const askOnce = () => {
+      DeviceOrientationEvent.requestPermission()
+        .then(resp => {
+          if (resp === 'granted') {
+            window.addEventListener('deviceorientation', handleOrientation);
+          }
+        })
+        .catch(() => { /* silencioso */ });
+      stage.removeEventListener('click', askOnce);
+    };
+    stage.addEventListener('click', askOnce, { once: true });
+  } else {
+    window.addEventListener('deviceorientation', handleOrientation);
+  }
+}
+enableGyro();
+
+/* =========================================================
+   Form handlers
+   ========================================================= */
+const form = {
+  name:   $('#f-name'),
+  sport:  $('#f-sport'),
+  metric: $('#f-metric'),
+  unit:   $('#f-unit'),
+  time:   $('#f-time'),
+  photo:  $('#f-photo')
+};
+
+function readForm() {
+  state.name   = form.name.value.trim();
+  state.sport  = form.sport.value;
+  state.metric = form.metric.value;
+  state.unit   = form.unit.value;
+  state.time   = form.time.value;
+}
+
+/* Emoji selector */
+$$('#emojiRow button').forEach(b => {
+  b.addEventListener('click', () => {
+    $$('#emojiRow button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    state.emoji = b.dataset.emoji;
+  });
+});
+
+/* Foto */
+form.photo.addEventListener('change', (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    state.photo = reader.result;
+    $('#photoPreview').style.backgroundImage = `url(${state.photo})`;
+  };
+  reader.readAsDataURL(file);
+});
+
+/* Generar */
+$('#btnGenerate').addEventListener('click', () => {
+  readForm();
+  if (!state.name) { toast('Pon tu nombre para forjar la carta'); form.name.focus(); return; }
+  if (!state.metric || parseFloat(state.metric) <= 0) { toast('Introduce una métrica válida'); form.metric.focus(); return; }
+
+  renderCard();
+
+  // Guardamos nombre + foto (persistencia mínima)
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ name: state.name, photo: state.photo }));
+  } catch(e) {}
+
+  // Colapsar formulario para dar protagonismo a la carta
+  $('#formWrap').classList.add('collapsed');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+$('#btnClear').addEventListener('click', () => {
+  form.name.value = '';
+  form.metric.value = '';
+  form.time.value = '';
+  form.photo.value = '';
+  state.photo = null;
+  $('#photoPreview').style.backgroundImage = '';
+  localStorage.removeItem(STORAGE_KEY);
+  toast('Reseteado');
+});
+
+$('#btnEdit').addEventListener('click', () => {
+  $('#formWrap').classList.remove('collapsed');
+  $('#formWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+/* =========================================================
+   BOTÓN VIRAL · html2canvas + Web Share API
+   ---------------------------------------------------------
+   Pasos:
+   1. Ponemos la carta en modo "capturing" (transforms en reposo)
+   2. html2canvas la renderiza a un <canvas>
+   3. canvas -> Blob PNG
+   4. Si navigator.share soporta ficheros, abrimos share nativo
+   5. Fallback: descarga directa del PNG
+   ========================================================= */
+$('#btnShare').addEventListener('click', async () => {
+  const btn = $('#btnShare');
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'Preparando…';
+
+  try {
+    // 1. Estado reposo para captura limpia
+    card.classList.add('capturing');
+    // Pequeño delay para que el navegador pinte el estado reposo
+    await new Promise(r => setTimeout(r, 60));
+
+    // 2. Render con html2canvas. scale=2 para resolución retina.
+    //    backgroundColor null para respetar el fondo de la carta.
+    const canvas = await html2canvas(card, {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      // allowTaint true por si el user sube imagen externa vía dataURL
+      allowTaint: true
+    });
+
+    card.classList.remove('capturing');
+
+    // 3. Canvas -> Blob
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 1));
+    if (!blob) throw new Error('No se pudo generar la imagen');
+
+    const filename = `herocard-${(state.name || 'hero').toLowerCase().replace(/\s+/g, '-')}.png`;
+    const file = new File([blob], filename, { type: 'image/png' });
+
+    // 4. Web Share API con ficheros (iOS 15+, Android Chrome)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Mi HeroCard',
+        text: `${state.name} · ${state.sport} · ${formatNum(state.metric)} ${state.unit} 🔥`
+      });
+      toast('Compartido ✓');
+    } else {
+      // 5. Fallback: descargar PNG
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      toast('Imagen descargada. ¡Súbela a Stories!');
+    }
+  } catch (err) {
+    console.error(err);
+    card.classList.remove('capturing');
+    // AbortError es cuando el usuario cierra el share nativo: no es error real
+    if (err && err.name !== 'AbortError') toast('No se pudo compartir. Intenta de nuevo.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+});
+
+/* Render inicial con valores placeholder */
+state.metric = 10;
+renderCard();
+</script>
+</body>
+</html>
