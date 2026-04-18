@@ -690,6 +690,31 @@ footer .d { color: var(--gold-1); }
   text-align: center;
 }
 
+/* Botón para activar giroscopio en iOS (oculto por defecto) */
+.gyro-btn {
+  display: none;
+  margin: 0 auto;
+  padding: 10px 16px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--gold-1);
+  border-radius: 999px;
+  color: var(--gold-1);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .2s, transform .15s;
+}
+.gyro-btn.visible { display: inline-block; }
+.gyro-btn:hover { background: rgba(248,225,153,.1); }
+.gyro-btn:active { transform: scale(.97); }
+.gyro-btn.active {
+  background: rgba(248,225,153,.15);
+  color: var(--gold-1);
+}
+
 /* Anti-jump durante captura */
 .card.capturing { transition: none !important; transform: none !important; }
 .card.capturing .holo { background-position: 50% 50% !important; }
@@ -850,6 +875,8 @@ footer .d { color: var(--gold-1); }
   </div>
 
   <p class="hint">Inclina tu móvil para ver el efecto holográfico · En escritorio mueve el ratón sobre la carta</p>
+
+  <button class="gyro-btn" id="gyroBtn">Activar efecto 3D</button>
 
   <footer>HeroCard <span class="d">●</span> v2.0 TCG</footer>
 </div>
@@ -1104,6 +1131,13 @@ stage.addEventListener('mouseleave', () => {
   card.classList.remove('is-active');
 });
 
+/* =========================================================
+   Giroscopio (móvil)
+   ---------------------------------------------------------
+   - iOS 13+: requiere permiso explícito tras gesto del usuario.
+     Mostramos un botón "Activar efecto 3D" para pedir el permiso.
+   - Android: se activa automáticamente.
+   ========================================================= */
 function handleOrientation(ev) {
   const beta  = ev.beta  || 0;
   const gamma = ev.gamma || 0;
@@ -1114,21 +1148,54 @@ function handleOrientation(ev) {
   card.classList.add('is-active');
 }
 
-function enableGyro() {
+const gyroBtn = $('#gyroBtn');
+let gyroActive = false;
+
+function activateGyroAndroid() {
+  window.addEventListener('deviceorientation', handleOrientation);
+  gyroActive = true;
+}
+
+function needsIOSPermission() {
+  return typeof DeviceOrientationEvent !== 'undefined' &&
+         typeof DeviceOrientationEvent.requestPermission === 'function';
+}
+
+function isMobile() {
+  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+         (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+}
+
+function setupGyro() {
   if (typeof DeviceOrientationEvent === 'undefined') return;
-  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-    const askOnce = () => {
-      DeviceOrientationEvent.requestPermission()
-        .then(resp => { if (resp === 'granted') window.addEventListener('deviceorientation', handleOrientation); })
-        .catch(() => {});
-      stage.removeEventListener('click', askOnce);
-    };
-    stage.addEventListener('click', askOnce, { once: true });
-  } else {
-    window.addEventListener('deviceorientation', handleOrientation);
+
+  if (needsIOSPermission()) {
+    // iOS 13+: mostrar botón para pedir permiso tras tap
+    gyroBtn.classList.add('visible');
+    gyroBtn.addEventListener('click', async () => {
+      try {
+        const resp = await DeviceOrientationEvent.requestPermission();
+        if (resp === 'granted') {
+          window.addEventListener('deviceorientation', handleOrientation);
+          gyroActive = true;
+          gyroBtn.classList.add('active');
+          gyroBtn.textContent = 'Efecto 3D activado ✓';
+          toast('Inclina el móvil para ver el holograma');
+          setTimeout(() => gyroBtn.classList.remove('visible'), 2500);
+        } else {
+          toast('Permiso denegado. Actívalo en Ajustes › Safari › Movimiento');
+        }
+      } catch (err) {
+        console.error(err);
+        toast('No se pudo activar el efecto 3D');
+      }
+    });
+  } else if (isMobile()) {
+    // Android / otros móviles: activación automática
+    activateGyroAndroid();
   }
 }
-enableGyro();
+setupGyro();
 
 /* =========================================================
    Form handlers
