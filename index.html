@@ -9,36 +9,33 @@
 <!-- html2canvas desde CDN para exportar la carta como imagen PNG -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-<!-- Tipografías: Orbitron (display futurista) + Space Mono (mono técnico) + Archivo Black (impacto) -->
+<!-- Tipografías: Cinzel (display épico tipo fantasy/TCG) + Oswald (números impacto) + Roboto Condensed (UI) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Space+Mono:wght@400;700&family=Archivo+Black&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Montserrat:wght@700;800;900&family=Oswald:wght@500;700&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
 /* =========================================================
-   HeroCard · Design Tokens
+   HeroCard TCG · Design Tokens
    ========================================================= */
 :root {
   --bg-0: #05060a;
-  --bg-1: #0b0d16;
-  --bg-2: #111526;
   --ink: #f4f6ff;
   --ink-dim: #8a90ad;
   --line: rgba(255,255,255,.08);
 
-  /* Acentos por rareza */
-  --common: #6b7280;
-  --elite:  #00e0ff;
-  --epic:   #b14bff;
-  --legendary: #ffb020;
+  /* Color del tipo activo (JS lo cambia según deporte) */
+  --type: #ff4d2e;
+  --type-dark: #8a1a0a;
+  --type-soft: rgba(255,77,46,.35);
 
-  /* Acento activo (lo cambia JS según rareza) */
-  --accent: var(--elite);
-  --accent-soft: rgba(0, 224, 255, .35);
-  --accent-glow: 0 0 40px rgba(0,224,255,.55), 0 0 120px rgba(0,224,255,.25);
+  /* Marco dorado TCG */
+  --gold-1: #f8e199;
+  --gold-2: #c48e2b;
+  --gold-3: #7a4d15;
 
   --card-w: min(92vw, 380px);
-  --card-h: calc(var(--card-w) * 1.55);
+  --card-h: calc(var(--card-w) * 1.4);
 }
 
 * { box-sizing: border-box; }
@@ -48,18 +45,17 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(177,75,255,.18), transparent 60%),
-    radial-gradient(900px 500px at 90% 10%, rgba(0,224,255,.15), transparent 60%),
-    radial-gradient(800px 500px at 50% 120%, rgba(255,176,32,.12), transparent 60%),
+    radial-gradient(1200px 600px at 10% -10%, rgba(177,75,255,.15), transparent 60%),
+    radial-gradient(900px 500px at 90% 10%, rgba(0,224,255,.12), transparent 60%),
+    radial-gradient(800px 500px at 50% 120%, rgba(255,176,32,.10), transparent 60%),
     var(--bg-0);
   color: var(--ink);
-  font-family: 'Space Mono', ui-monospace, monospace;
+  font-family: 'Roboto Condensed', system-ui, sans-serif;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
 
-/* Grilla decorativa de fondo, muy sutil */
 body::before {
   content: "";
   position: fixed; inset: 0;
@@ -72,7 +68,6 @@ body::before {
   z-index: 0;
 }
 
-/* Ruido sutil para romper la limpieza de IA */
 body::after {
   content: "";
   position: fixed; inset: 0;
@@ -107,14 +102,15 @@ header.brand {
   border-bottom: 1px solid var(--line);
 }
 .logo {
-  font-family: 'Archivo Black', sans-serif;
-  letter-spacing: .02em;
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  letter-spacing: .04em;
   font-size: 20px;
   text-transform: uppercase;
 }
 .logo span {
-  color: var(--accent);
-  text-shadow: 0 0 12px var(--accent-soft);
+  color: var(--gold-1);
+  text-shadow: 0 0 12px rgba(248,225,153,.4);
 }
 .tag {
   font-size: 10px;
@@ -153,12 +149,12 @@ header.brand {
 }
 
 .form-title {
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Cinzel', serif;
   font-weight: 700;
-  letter-spacing: .18em;
-  font-size: 12px;
+  letter-spacing: .14em;
+  font-size: 14px;
   text-transform: uppercase;
-  color: var(--ink-dim);
+  color: var(--ink);
   margin: 0 0 14px;
 }
 
@@ -185,15 +181,21 @@ input, select {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 12px 14px;
-  font: 500 14px/1.2 'Space Mono', monospace;
+  font: 500 14px/1.2 'Roboto Condensed', sans-serif;
   outline: none;
-  transition: border-color .2s, box-shadow .2s, background .2s;
+  transition: border-color .2s, box-shadow .2s;
 }
 input:focus, select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--gold-1);
+  box-shadow: 0 0 0 3px rgba(248,225,153,.25);
 }
-select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--ink-dim) 50%), linear-gradient(135deg, var(--ink-dim) 50%, transparent 50%); background-position: calc(100% - 18px) 18px, calc(100% - 13px) 18px; background-size: 5px 5px; background-repeat: no-repeat; }
+select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-dim) 50%), linear-gradient(135deg, var(--ink-dim) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 18px, calc(100% - 13px) 18px;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
 
 .emoji-row {
   display: flex;
@@ -214,9 +216,9 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 }
 .emoji-row button:hover { transform: translateY(-1px); }
 .emoji-row button.active {
-  border-color: var(--accent);
+  border-color: var(--gold-1);
   background: rgba(255,255,255,.04);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  box-shadow: 0 0 0 3px rgba(248,225,153,.25);
 }
 
 .photo-input {
@@ -261,13 +263,13 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   cursor: pointer;
   padding: 14px 18px;
   border-radius: 12px;
-  font: 700 12px/1 'Orbitron', sans-serif;
-  letter-spacing: .2em;
+  font: 700 12px/1 'Cinzel', serif;
+  letter-spacing: .14em;
   text-transform: uppercase;
-  transition: transform .15s ease, box-shadow .25s ease, background .25s ease;
-  color: #000;
-  background: var(--accent);
-  box-shadow: 0 10px 30px var(--accent-soft), inset 0 1px 0 rgba(255,255,255,.4);
+  transition: transform .15s ease, box-shadow .25s ease;
+  color: #1a0f00;
+  background: linear-gradient(180deg, var(--gold-1) 0%, var(--gold-2) 100%);
+  box-shadow: 0 10px 30px rgba(196,142,43,.35), inset 0 1px 0 rgba(255,255,255,.5);
   flex: 1;
   min-width: 160px;
 }
@@ -280,10 +282,10 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   border: 1px solid var(--line);
   box-shadow: none;
 }
-.btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn.ghost:hover { border-color: var(--gold-1); color: var(--gold-1); }
 
 /* =========================================================
-   Stage & Card
+   Stage & Card (ESTILO POKÉMON TCG)
    ========================================================= */
 .stage {
   perspective: 1400px;
@@ -296,57 +298,66 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 24px;
+  border-radius: 18px;
   transform-style: preserve-3d;
   transition: transform .18s ease-out;
   will-change: transform;
 
-  /* Fondo base de la carta: degradado + textura */
+  /* Borde exterior coloreado según el tipo */
   background:
-    radial-gradient(120% 80% at 20% 0%, rgba(255,255,255,.06), transparent 60%),
-    linear-gradient(160deg, #12162a 0%, #0a0c18 55%, #05060a 100%);
-  border: 1px solid rgba(255,255,255,.08);
+    linear-gradient(180deg, var(--type) 0%, var(--type-dark) 100%);
+  padding: 10px;
   box-shadow:
     0 30px 80px rgba(0,0,0,.55),
-    0 0 0 1px rgba(255,255,255,.04) inset,
-    var(--accent-glow);
+    0 0 60px var(--type-soft);
   overflow: hidden;
 }
 
-/* Borde animado brillante (conic gradient girando) */
-.card::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 26px;
-  padding: 2px;
-  background: conic-gradient(
-    from 0deg,
-    var(--accent) 0deg,
-    transparent 60deg,
-    var(--accent) 180deg,
-    transparent 240deg,
-    var(--accent) 360deg
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  animation: spin 6s linear infinite;
-  opacity: .8;
-  pointer-events: none;
-  z-index: 3;
+/* Marco dorado interior (doble borde típico de TCG) */
+.card-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--gold-1) 0%, var(--gold-2) 35%, var(--gold-3) 65%, var(--gold-2) 85%, var(--gold-1) 100%);
+  padding: 4px;
+  box-shadow: inset 0 0 8px rgba(0,0,0,.4);
 }
-@keyframes spin { to { transform: rotate(360deg); } }
 
-/* Capa HOLOGRÁFICA — gradiente arcoíris + blend mode. Se mueve con JS. */
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #f5e9c8 0%, #e8d49b 100%);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Rayas foil muy sutiles sobre toda la carta */
+.card .foil-lines {
+  position: absolute; inset: 0;
+  border-radius: 18px;
+  pointer-events: none;
+  z-index: 8;
+  background: repeating-linear-gradient(
+    115deg,
+    rgba(255,255,255,.03) 0 2px,
+    transparent 2px 6px
+  );
+  mix-blend-mode: screen;
+}
+
+/* Capa HOLOGRÁFICA - gradiente arcoíris + blend mode */
 .card .holo {
   position: absolute;
   inset: 0;
-  border-radius: 24px;
+  border-radius: 18px;
   pointer-events: none;
-  z-index: 4;
+  z-index: 9;
   mix-blend-mode: color-dodge;
-  opacity: .55;
+  opacity: .45;
   background:
     linear-gradient(
       115deg,
@@ -360,17 +371,16 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
     );
   background-size: 300% 300%;
   background-position: 50% 50%;
-  transition: background-position .1s linear, opacity .3s ease;
   filter: blur(1px);
 }
 
-/* Capa de brillo puntual que sigue al cursor */
+/* Gloss radial puntual que sigue al cursor */
 .card .gloss {
   position: absolute;
   inset: 0;
-  border-radius: 24px;
+  border-radius: 18px;
   pointer-events: none;
-  z-index: 5;
+  z-index: 10;
   background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,.35), transparent 40%);
   mix-blend-mode: overlay;
   opacity: 0;
@@ -378,192 +388,229 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 }
 .card.is-active .gloss { opacity: 1; }
 
-/* Rayas foil (líneas diagonales muy sutiles) */
-.card .foil-lines {
-  position: absolute; inset: 0;
-  border-radius: 24px;
-  pointer-events: none;
-  z-index: 2;
-  background: repeating-linear-gradient(
-    115deg,
-    rgba(255,255,255,.03) 0 2px,
-    transparent 2px 6px
-  );
-  mix-blend-mode: screen;
-}
+/* =========================================================
+   CONTENIDO · Estructura TCG
+   ========================================================= */
 
-/* Contenido de la carta */
-.card .content {
-  position: relative;
-  z-index: 6;
-  height: 100%;
-  padding: 22px 22px 20px;
+/* HEADER: Nombre + HP */
+.tcg-header {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
-}
-
-/* Header de la carta: rareza + deporte */
-.card .header {
-  width: 100%;
-  display: flex;
   justify-content: space-between;
-  align-items: center;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 10px;
-  letter-spacing: .28em;
-  text-transform: uppercase;
-  color: var(--ink-dim);
+  gap: 8px;
+  padding: 8px 12px 6px;
+  background: linear-gradient(180deg, rgba(255,255,255,.25), transparent);
 }
-.card .rarity-tag {
-  padding: 4px 8px;
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  border-radius: 4px;
-  font-weight: 700;
-  background: rgba(0,0,0,.25);
-}
-.card .date-tag {
-  font-family: 'Space Mono', monospace;
-  letter-spacing: .1em;
-}
-
-/* Avatar hexagonal */
-.avatar {
-  margin-top: 14px;
-  width: 120px;
-  height: 138px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  filter: drop-shadow(0 8px 20px rgba(0,0,0,.6));
-}
-.avatar .hex {
-  width: 100%; height: 100%;
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  background: linear-gradient(160deg, var(--accent), #fff);
-  padding: 3px;
-}
-.avatar .hex .inner {
-  width: 100%; height: 100%;
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  background: #0a0c18 center/cover no-repeat;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Archivo Black', sans-serif;
-  font-size: 44px;
-  color: var(--accent);
-}
-
-/* Power Score gigante */
-.power-wrap {
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.tcg-name {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: -.01em;
+  color: #1a0f00;
+  text-shadow: 0 1px 0 rgba(255,255,255,.4);
   line-height: 1;
-}
-.power-label {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 10px;
-  letter-spacing: .3em;
   text-transform: uppercase;
-  color: var(--ink-dim);
-  margin-bottom: 4px;
-}
-.power-score {
-  font-family: 'Archivo Black', sans-serif;
-  font-size: clamp(72px, 18vw, 96px);
-  letter-spacing: -.02em;
-  color: var(--ink);
-  background: linear-gradient(180deg, #fff 0%, var(--accent) 90%);
-  -webkit-background-clip: text;
-          background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 30px var(--accent-soft);
-  line-height: .9;
-}
-
-/* Nombre + deporte */
-.identity {
-  margin-top: 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-.identity .name {
-  font-family: 'Archivo Black', sans-serif;
-  font-size: 22px;
-  letter-spacing: .02em;
-  text-transform: uppercase;
-  max-width: 100%;
+  max-width: 65%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.identity .sport {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 11px;
-  letter-spacing: .3em;
-  text-transform: uppercase;
-  color: var(--accent);
+.tcg-hp {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  color: #c00e0e;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  line-height: 1;
 }
-.identity .mood {
-  font-size: 22px;
-  margin-top: 4px;
+.tcg-hp .lbl {
+  font-size: 11px;
+  letter-spacing: .08em;
+}
+.tcg-hp .val {
+  font-size: 26px;
+  text-shadow: 0 1px 0 rgba(255,255,255,.5);
 }
 
-/* Stats banda inferior */
-.stats {
-  margin-top: auto;
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1px 1fr;
-  gap: 0;
-  padding: 12px 10px;
-  border-top: 1px solid rgba(255,255,255,.08);
-  background: linear-gradient(180deg, transparent, rgba(0,0,0,.35));
-}
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-.stat .v {
-  font-family: 'Archivo Black', sans-serif;
-  font-size: 18px;
-  letter-spacing: .02em;
-  color: var(--ink);
-}
-.stat .k {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 9px;
-  letter-spacing: .28em;
+/* SUBHEADER: tipo/deporte */
+.tcg-subheader {
+  padding: 0 12px 6px;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: .22em;
   text-transform: uppercase;
-  color: var(--ink-dim);
+  color: #4a3a1a;
 }
-.stats .sep { background: rgba(255,255,255,.1); height: 100%; }
+
+/* ILUSTRACIÓN: Foto central con marco dorado */
+.tcg-illustration {
+  position: relative;
+  margin: 0 10px;
+  aspect-ratio: 4 / 3;
+  border: 3px solid var(--gold-2);
+  border-radius: 2px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.3) 0%, transparent 20%),
+    linear-gradient(135deg, #b8d4e8 0%, #e8c4a0 100%);
+  box-shadow:
+    inset 0 0 0 1px var(--gold-1),
+    inset 0 0 20px rgba(0,0,0,.3),
+    0 2px 6px rgba(0,0,0,.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tcg-illustration .photo {
+  width: 100%;
+  height: 100%;
+  background: center/cover no-repeat;
+}
+.tcg-illustration .placeholder {
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  font-size: 64px;
+  color: rgba(0,0,0,.3);
+  text-shadow: 0 2px 0 rgba(255,255,255,.3);
+}
+/* Sello de tipo en esquina de la ilustración */
+.type-badge {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--type);
+  border: 2px solid var(--gold-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.3), inset 0 -2px 4px rgba(0,0,0,.25);
+}
+.type-badge svg { width: 18px; height: 18px; fill: #fff; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+
+/* DESCRIPCIÓN corta bajo la ilustración (tipo "longitud/peso" de Pokémon) */
+.tcg-desc {
+  padding: 6px 12px 4px;
+  font-size: 10px;
+  font-style: italic;
+  color: #4a3a1a;
+  border-bottom: 1px solid rgba(0,0,0,.15);
+  letter-spacing: .02em;
+}
+
+/* SECCIÓN ATAQUE */
+.tcg-attack {
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+  position: relative;
+}
+.tcg-attack::before {
+  content: "";
+  position: absolute;
+  left: 12px; right: 12px;
+  bottom: 0;
+  height: 1px;
+  background: rgba(0,0,0,.15);
+}
+.attack-cost {
+  display: flex;
+  gap: 3px;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+.energy {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--type);
+  border: 1.5px solid #1a0f00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.3), inset 0 -2px 3px rgba(0,0,0,.25);
+}
+.energy svg { width: 13px; height: 13px; fill: #fff; filter: drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+.attack-body {
+  flex: 1;
+  min-width: 0;
+}
+.attack-name {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  color: #1a0f00;
+  text-transform: uppercase;
+  letter-spacing: .01em;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.attack-flavor {
+  font-size: 11px;
+  color: #4a3a1a;
+  line-height: 1.3;
+  font-style: italic;
+}
+.attack-damage {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 30px;
+  color: #1a0f00;
+  line-height: 1;
+  flex-shrink: 0;
+  padding-top: 2px;
+  text-shadow: 1px 1px 0 rgba(255,255,255,.4);
+}
+
+/* FOOTER: datos tipo Pokedex (rareza + id coleccionable) */
+.tcg-footer {
+  padding: 6px 12px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Oswald', sans-serif;
+  font-size: 9px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: #4a3a1a;
+}
+.tcg-footer .rarity-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.tcg-footer .dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #4a3a1a;
+  border: 1px solid rgba(0,0,0,.3);
+}
+.card[data-rarity="common"]    .dot { background: #4a3a1a; }
+.card[data-rarity="elite"]     .dot { background: #1e9ce8; box-shadow: 0 0 6px #1e9ce8; }
+.card[data-rarity="epic"]      .dot { background: #b14bff; box-shadow: 0 0 6px #b14bff; }
+.card[data-rarity="legendary"] .dot { background: var(--gold-1); box-shadow: 0 0 10px var(--gold-1); }
 
 /* Partículas legendarias */
 .particles {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 7;
+  z-index: 11;
   display: none;
+  overflow: hidden;
+  border-radius: 18px;
 }
 .card[data-rarity="legendary"] .particles { display: block; }
 .particles i {
   position: absolute;
   width: 3px; height: 3px;
   border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
+  background: var(--gold-1);
+  box-shadow: 0 0 8px var(--gold-1);
   opacity: 0;
   animation: rise linear infinite;
 }
@@ -574,7 +621,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 }
 
 /* =========================================================
-   Bottom toolbar (botones fuera de la carta)
+   Toolbar bajo la carta
    ========================================================= */
 .toolbar {
   display: flex;
@@ -584,7 +631,6 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 }
 .toolbar .btn { flex: 1 1 140px; }
 
-/* Botón viral destacado con lustre */
 .btn.viral {
   background: linear-gradient(135deg, #ffb020, #ff3d7f 60%, #b14bff);
   color: #000;
@@ -606,7 +652,6 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   100% { background-position: -100% 0; }
 }
 
-/* Toast de feedback */
 .toast {
   position: fixed;
   bottom: 24px; left: 50%;
@@ -627,7 +672,6 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* Footer */
 footer {
   font-size: 10px;
   letter-spacing: .2em;
@@ -636,9 +680,8 @@ footer {
   text-align: center;
   padding-top: 8px;
 }
-footer .dot { color: var(--accent); }
+footer .d { color: var(--gold-1); }
 
-/* Mobile hint */
 .hint {
   font-size: 10px;
   letter-spacing: .2em;
@@ -647,7 +690,7 @@ footer .dot { color: var(--accent); }
   text-align: center;
 }
 
-/* No transition durante captura para que html2canvas vea el estado reposo */
+/* Anti-jump durante captura */
 .card.capturing { transition: none !important; transform: none !important; }
 .card.capturing .holo { background-position: 50% 50% !important; }
 .card.capturing .gloss { opacity: 0 !important; }
@@ -663,7 +706,7 @@ footer .dot { color: var(--accent); }
 
   <header class="brand">
     <div class="logo">HERO<span>CARD</span></div>
-    <div class="tag">v1.0 · Daily Flex</div>
+    <div class="tag">TCG Edition</div>
   </header>
 
   <!-- ============ FORM ============ -->
@@ -725,7 +768,7 @@ footer .dot { color: var(--accent); }
       </div>
 
       <div class="full">
-        <label>Foto (opcional)</label>
+        <label>Foto del héroe</label>
         <div class="photo-input">
           <div class="preview" id="photoPreview"></div>
           <label class="file-btn" for="f-photo">Subir foto</label>
@@ -740,74 +783,87 @@ footer .dot { color: var(--accent); }
     </div>
   </section>
 
-  <!-- ============ CARD ============ -->
+  <!-- ============ CARD TCG ============ -->
   <div class="stage" id="stage">
     <article class="card" id="hero-card" data-rarity="elite">
+      <div class="card-frame">
+        <div class="card-inner">
+
+          <!-- Header: nombre + HP -->
+          <div class="tcg-header">
+            <div class="tcg-name" id="c-name">TU NOMBRE</div>
+            <div class="tcg-hp">
+              <span class="lbl">HP</span>
+              <span class="val" id="c-hp">100</span>
+            </div>
+          </div>
+
+          <!-- Subheader: tipo/deporte -->
+          <div class="tcg-subheader" id="c-subheader">Atleta · Running</div>
+
+          <!-- Ilustración central -->
+          <div class="tcg-illustration">
+            <div class="photo" id="c-photo"></div>
+            <div class="placeholder" id="c-placeholder">?</div>
+            <div class="type-badge" id="c-typebadge"></div>
+          </div>
+
+          <!-- Descripción tipo flavor text -->
+          <div class="tcg-desc" id="c-desc">Registro: 10 km · 00.00.00</div>
+
+          <!-- Ataque -->
+          <div class="tcg-attack">
+            <div class="attack-cost" id="c-cost">
+              <div class="energy"></div>
+            </div>
+            <div class="attack-body">
+              <div class="attack-name" id="c-attack">Ataque Rápido</div>
+              <div class="attack-flavor" id="c-flavor">Velocidad pura. Nada te frena.</div>
+            </div>
+            <div class="attack-damage" id="c-damage">30</div>
+          </div>
+
+          <!-- Footer: rareza + ID coleccionable -->
+          <div class="tcg-footer">
+            <span class="rarity-dot">
+              <span class="dot"></span>
+              <span id="c-rarity">ELITE</span>
+            </span>
+            <span id="c-id">N.º RUN-030 / ∞</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Capas de efecto (fuera del frame para cubrir toda la carta) -->
       <div class="foil-lines"></div>
       <div class="holo" id="holo"></div>
       <div class="gloss" id="gloss"></div>
       <div class="particles" id="particles"></div>
-
-      <div class="content">
-        <div class="header">
-          <span class="rarity-tag" id="c-rarity">ELITE</span>
-          <span class="date-tag" id="c-date">00.00.00</span>
-        </div>
-
-        <div class="avatar">
-          <div class="hex">
-            <div class="inner" id="c-avatar">R</div>
-          </div>
-        </div>
-
-        <div class="power-wrap">
-          <div class="power-label">Power Score</div>
-          <div class="power-score" id="c-power">000</div>
-        </div>
-
-        <div class="identity">
-          <div class="name" id="c-name">TU NOMBRE</div>
-          <div class="sport" id="c-sport">DEPORTE</div>
-          <div class="mood" id="c-mood">🔥</div>
-        </div>
-
-        <div class="stats">
-          <div class="stat">
-            <div class="v" id="c-metric">10 km</div>
-            <div class="k">Métrica</div>
-          </div>
-          <div class="sep"></div>
-          <div class="stat">
-            <div class="v" id="c-time">—</div>
-            <div class="k">Tiempo</div>
-          </div>
-        </div>
-      </div>
     </article>
   </div>
 
   <!-- ============ TOOLBAR ============ -->
   <div class="toolbar">
     <button class="btn ghost" id="btnEdit">Editar</button>
-    <button class="btn viral" id="btnShare">Presumir en Stories</button>
+    <button class="btn viral" id="btnShare">Compartir Carta</button>
   </div>
 
   <p class="hint">Inclina tu móvil para ver el efecto holográfico · En escritorio mueve el ratón sobre la carta</p>
 
-  <footer>HeroCard <span class="dot">●</span> v1.0</footer>
+  <footer>HeroCard <span class="d">●</span> v2.0 TCG</footer>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 /* =========================================================
-   HeroCard · App Logic (vanilla JS)
+   HeroCard TCG · App Logic
    ========================================================= */
 
-/* ---- Utilidades ---- */
 const $  = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
-const STORAGE_KEY = 'herocard.v1';
+const STORAGE_KEY = 'herocard.v2';
 
 const toast = (msg, ms=2200) => {
   const el = $('#toast');
@@ -825,10 +881,10 @@ let state = {
   unit: 'km',
   time: '',
   emoji: '🔥',
-  photo: null   // dataURL
+  photo: null
 };
 
-/* ---- Persistencia: cargamos nombre + foto si existen ---- */
+/* ---- Persistencia ---- */
 (function restore() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -836,23 +892,66 @@ let state = {
     const saved = JSON.parse(raw);
     if (saved.name)  { $('#f-name').value = saved.name;  state.name = saved.name; }
     if (saved.photo) { state.photo = saved.photo; $('#photoPreview').style.backgroundImage = `url(${saved.photo})`; }
-  } catch (e) { /* noop */ }
+  } catch (e) {}
 })();
 
 /* =========================================================
-   Motor de Rareza + Power Score
+   DICCIONARIO DE DEPORTES
    ---------------------------------------------------------
-   La idea: convertir la métrica en un score 0-99 dependiendo
-   del tipo de unidad, y asignar una rareza basada en tramos.
-   Los umbrales son opinados pero razonables para uso amateur.
+   Cada deporte define:
+   - type/typeDark: colores del borde exterior y la energía
+   - iconPath: path SVG (viewBox 0 0 24 24) del icono del tipo
+   - attack: nombre del ataque (estilo TCG)
+   - flavor: descripción corta del ataque
+   - typeLabel: nombre del "tipo" (como "Corredor")
    ========================================================= */
-function computeRarityAndScore(metric, unit, timeStr) {
+
+/* Iconos SVG limpios, estilo silueta plana (viewBox 24x24) */
+const ICONS = {
+  run:    'M13.5 5.5a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM9.8 8.9 7 10.3V14h2v-2.2l1.8-.7.9 1.4L8.5 15l-.6 3 1.9.4.6-3 2.4-1 .9 3.1L16 17 14 10.5l-1.9-2L10 7.5z',
+  bike:   'M5 17.5a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm14 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM9 5h4v2l3 4h3l-1.5 5.5-1.4-.4L17 11h-2l-3-4V5z',
+  cross:  'M12 2 8 6l1.4 1.4L12 4.8l2.6 2.6L16 6l-4-4zM6 8 2 12l4 4 1.4-1.4L4.8 12l2.6-2.6L6 8zm12 0-1.4 1.4L19.2 12l-2.6 2.6L18 16l4-4-4-4zM12 19.2 9.4 16.6 8 18l4 4 4-4-1.4-1.4L12 19.2z',
+  gym:    'M4 10h2v4H4v-4zm14 0h2v4h-2v-4zM7 9h2v6H7V9zm8 0h2v6h-2V9zm-5 2h4v2h-4v-2z',
+  lift:   'M3 11h2v2H3v-2zm16 0h2v2h-2v-2zM6 9h2v6H6V9zm10 0h2v6h-2V9zM9 10h6v4H9v-4z',
+  swim:   'M12 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM3 14c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1v2c-1.5 0-1.5 1-3 1s-1.5-1-3-1-1.5 1-3 1-1.5-1-3-1-1.5 1-3 1-1.5-1-3-1v-2zm0 4c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1v2c-1.5 0-1.5 1-3 1s-1.5-1-3-1-1.5 1-3 1-1.5-1-3-1-1.5 1-3 1-1.5-1-3-1v-2z',
+  trail:  'M14 6l-3.5 4.5 2.5 3L10 17H4l3-4 1.5 2L11 11 8.5 8 4 14V4h16v10l-2.5-3L14 6z',
+  padel:  'M12 3C8.5 3 6 5.5 6 9c0 2.5 1.3 4.6 3.3 5.5L8 21h2l1-4h2l1 4h2l-1.3-6.5C16.7 13.6 18 11.5 18 9c0-3.5-2.5-6-6-6zm0 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6z',
+  box:    'M8 3h8l1 4v3l-2 1v10H9V11l-2-1V7l1-4zm2 4h4V5h-4v2zm-1 5h6v2H9v-2z',
+  yoga:   'M12 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-5 6c0 3 2 5 5 5s5-2 5-5M6 20c2-2 4-2 6-2s4 0 6 2M8 15l-2 5m10-5 2 5'
+};
+
+const SPORT_DATA = {
+  'Running':     { type: '#ff4d2e', typeDark: '#8a1a0a', icon: ICONS.run,   attack: 'Ataque Rápido',   flavor: 'Velocidad pura. Nada te frena.',               typeLabel: 'Corredor' },
+  'Ciclismo':    { type: '#2ed573', typeDark: '#0e5c2e', icon: ICONS.bike,  attack: 'Ráfaga Giratoria', flavor: 'Pedaladas que parten el asfalto.',              typeLabel: 'Ciclista' },
+  'Crossfit':    { type: '#ff6b35', typeDark: '#7a2e0a', icon: ICONS.cross, attack: 'Combo WOD',        flavor: 'Un golpe. Dos golpes. No para.',                typeLabel: 'Atleta Funcional' },
+  'Calistenia':  { type: '#ffc107', typeDark: '#7a5a00', icon: ICONS.gym,   attack: 'Dominada Letal',   flavor: 'El peso del cuerpo como arma.',                 typeLabel: 'Gimnasta' },
+  'Powerlifting':{ type: '#8b0000', typeDark: '#3d0000', icon: ICONS.lift,  attack: 'Peso Muerto',      flavor: 'Levanta lo imposible y vuelve a intentarlo.',   typeLabel: 'Titán' },
+  'Natación':    { type: '#1e9ce8', typeDark: '#0a3d66', icon: ICONS.swim,  attack: 'Hidro Bomba',      flavor: 'El agua se aparta a su paso.',                  typeLabel: 'Nadador' },
+  'Trail':       { type: '#6a3410', typeDark: '#2a1404', icon: ICONS.trail, attack: 'Salto de Montaña', flavor: 'Conquista la cumbre, desafía la gravedad.',     typeLabel: 'Explorador' },
+  'Padel':       { type: '#00c6a7', typeDark: '#00614f', icon: ICONS.padel, attack: 'Remate Smash',     flavor: 'La pelota nunca vuelve.',                       typeLabel: 'Raqueta' },
+  'Boxeo':       { type: '#c9302c', typeDark: '#5c0e0b', icon: ICONS.box,   attack: 'Uppercut Final',   flavor: 'Un golpe. Un KO. Se acabó.',                     typeLabel: 'Luchador' },
+  'Yoga':        { type: '#b14bff', typeDark: '#4a0e7a', icon: ICONS.yoga,  attack: 'Flujo Zen',        flavor: 'Equilibrio perfecto. Mente intocable.',          typeLabel: 'Asceta' }
+};
+
+/* Helper para construir un <svg> inline a partir de un path */
+function svgIcon(path) {
+  return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="${path}"/></svg>`;
+}
+
+/* =========================================================
+   Motor de Rareza + Damage + HP
+   ---------------------------------------------------------
+   Damage y HP escalan con la métrica como antes hacía el
+   Power Score, pero se redondean a múltiplos de 10 para
+   respetar el aire de Pokémon TCG (20, 30, 50, 80, 120...).
+   ========================================================= */
+function computeStats(metric, unit, timeStr) {
   const m = parseFloat(metric) || 0;
 
   // Umbrales por unidad: [common<, elite<, epic<, legendary>=]
   const thresholds = {
-    km:   [5, 10, 21, 42],     // running / ciclismo (un poco inflado para ciclo pero vale)
-    kg:   [40, 100, 180, 250], // peso levantado
+    km:   [5, 10, 21, 42],
+    kg:   [40, 100, 180, 250],
     reps: [20, 60, 120, 200],
     m:    [100, 500, 1500, 3000],
     min:  [15, 45, 90, 180]
@@ -865,78 +964,81 @@ function computeRarityAndScore(metric, unit, timeStr) {
   else if (m >= t[1]) rarity = 'elite';
   else                rarity = 'common';
 
-  // Score 0-99, escalado logarítmicamente respecto al umbral legendary.
-  // Evita quedarse siempre en 99: usamos sqrt para una curva agradable.
+  // Damage: curva sqrt, redondeado a múltiplos de 10. Bonus si hay tiempo.
   const topRef = t[3] * 1.25;
-  let score = Math.round(Math.sqrt(Math.min(m, topRef) / topRef) * 99);
-  score = Math.max(1, Math.min(99, score));
+  let raw = Math.sqrt(Math.min(m, topRef) / topRef) * 150;
+  if (timeStr && timeStr.trim()) raw += 10;
+  let damage = Math.round(raw / 10) * 10;
+  damage = Math.max(10, Math.min(150, damage));
 
-  // Bonus sutil si hay tiempo declarado (esfuerzo trackeado)
-  if (timeStr && timeStr.trim()) score = Math.min(99, score + 2);
+  // HP: mayor que damage (como en Pokémon). Múltiplos de 10.
+  let hp = Math.round((damage * 1.6 + 50) / 10) * 10;
+  hp = Math.max(60, Math.min(240, hp));
 
-  return { rarity, score };
+  return { rarity, damage, hp };
 }
 
 /* =========================================================
-   Render de la carta
+   Render de la carta TCG
    ========================================================= */
-const RARITY_META = {
-  common:    { label: 'COMMON',    accent: '#8a90ad', soft: 'rgba(138,144,173,.35)',  glow: '0 0 30px rgba(138,144,173,.4)' },
-  elite:     { label: 'ELITE',     accent: '#00e0ff', soft: 'rgba(0,224,255,.35)',    glow: '0 0 40px rgba(0,224,255,.55), 0 0 120px rgba(0,224,255,.25)' },
-  epic:      { label: 'EPIC',      accent: '#b14bff', soft: 'rgba(177,75,255,.35)',   glow: '0 0 40px rgba(177,75,255,.55), 0 0 120px rgba(177,75,255,.25)' },
-  legendary: { label: 'LEGENDARY', accent: '#ffb020', soft: 'rgba(255,176,32,.45)',   glow: '0 0 50px rgba(255,176,32,.65), 0 0 140px rgba(255,176,32,.3)'  }
-};
-
 function renderCard() {
-  const { rarity, score } = computeRarityAndScore(state.metric, state.unit, state.time);
-  const meta = RARITY_META[rarity];
+  const { rarity, damage, hp } = computeStats(state.metric, state.unit, state.time);
+  const sport = SPORT_DATA[state.sport] || SPORT_DATA['Running'];
 
-  // Aplicar colores de rareza como CSS vars (afectan a bordes, glow, avatar, etc.)
+  // Aplicar color del tipo como CSS var
   const root = document.documentElement.style;
-  root.setProperty('--accent', meta.accent);
-  root.setProperty('--accent-soft', meta.soft);
-  root.setProperty('--accent-glow', meta.glow);
+  root.setProperty('--type', sport.type);
+  root.setProperty('--type-dark', sport.typeDark);
+  root.setProperty('--type-soft', sport.type + '59'); // ~35% alpha aprox
 
   // Campos
-  $('#c-rarity').textContent = meta.label;
-  $('#c-power').textContent  = String(score).padStart(2, '0');
-  $('#c-name').textContent   = (state.name || 'TU NOMBRE').toUpperCase();
-  $('#c-sport').textContent  = state.sport.toUpperCase();
-  $('#c-mood').textContent   = state.emoji;
+  $('#c-name').textContent   = (state.name || 'Tu Nombre');
+  $('#c-hp').textContent     = hp;
+  $('#c-subheader').textContent = `${sport.typeLabel} · ${state.sport}`;
+  $('#c-typebadge').innerHTML = svgIcon(sport.icon);
+  $('#c-cost').innerHTML      = `<div class="energy">${svgIcon(sport.icon)}</div>`;
+  $('#c-attack').textContent = sport.attack;
+  $('#c-flavor').textContent = sport.flavor;
+  $('#c-damage').textContent = damage;
 
-  // Métrica formateada
-  const formattedMetric = state.metric
-    ? `${formatNum(state.metric)} ${state.unit}`
-    : '—';
-  $('#c-metric').textContent = formattedMetric;
-  $('#c-time').textContent   = state.time.trim() || '—';
-
-  // Fecha DD.MM.YY
+  // Descripción tipo flavor
   const d = new Date();
   const pad = n => String(n).padStart(2, '0');
-  $('#c-date').textContent = `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${String(d.getFullYear()).slice(2)}`;
+  const fecha = `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${String(d.getFullYear()).slice(2)}`;
+  const metricTxt = state.metric ? `${formatNum(state.metric)} ${state.unit}` : '—';
+  const timeTxt = state.time.trim() ? ` · Tiempo: ${state.time.trim()}` : '';
+  $('#c-desc').textContent = `Registro: ${metricTxt}${timeTxt} · ${fecha}`;
 
-  // Avatar: foto o inicial
-  const av = $('#c-avatar');
-  if (state.photo) {
-    av.textContent = '';
-    av.style.backgroundImage = `url(${state.photo})`;
-  } else {
-    av.style.backgroundImage = '';
-    av.textContent = (state.name || 'H').trim().charAt(0).toUpperCase();
-  }
-
-  // Rareza en el elemento para activar CSS (partículas)
+  // Rareza
+  const rarityLabel = { common: 'COMMON', elite: 'ELITE', epic: 'EPIC', legendary: 'LEGENDARY' }[rarity];
+  $('#c-rarity').textContent = rarityLabel;
   $('#hero-card').dataset.rarity = rarity;
 
-  // Generar partículas si es legendary
-  renderParticles(rarity === 'legendary' ? 18 : 0);
+  // ID coleccionable
+  const sportCode = state.sport.substring(0, 3).toUpperCase();
+  $('#c-id').textContent = `N.º ${sportCode}-${String(damage).padStart(3, '0')} / ∞ ${state.emoji}`;
+
+  // Foto del usuario como ilustración central
+  const photoEl = $('#c-photo');
+  const placeholderEl = $('#c-placeholder');
+  if (state.photo) {
+    photoEl.style.backgroundImage = `url(${state.photo})`;
+    photoEl.style.display = 'block';
+    placeholderEl.style.display = 'none';
+  } else {
+    photoEl.style.backgroundImage = '';
+    photoEl.style.display = 'none';
+    placeholderEl.style.display = 'flex';
+    placeholderEl.textContent = (state.name || '?').trim().charAt(0).toUpperCase() || '?';
+  }
+
+  // Partículas legendary
+  renderParticles(rarity === 'legendary' ? 20 : 0);
 }
 
 function formatNum(n) {
   const num = parseFloat(n);
   if (isNaN(num)) return n;
-  // Sin decimales innecesarios
   return (num % 1 === 0) ? String(num) : num.toFixed(2).replace(/\.?0+$/, '');
 }
 
@@ -945,31 +1047,26 @@ function renderParticles(count) {
   box.innerHTML = '';
   for (let i = 0; i < count; i++) {
     const p = document.createElement('i');
-    const left = Math.random() * 100;
-    const delay = Math.random() * 6;
-    const dur = 4 + Math.random() * 4;
-    const size = 2 + Math.random() * 3;
-    p.style.left = `${left}%`;
+    p.style.left = `${Math.random() * 100}%`;
     p.style.bottom = `-10px`;
+    const size = 2 + Math.random() * 3;
     p.style.width = p.style.height = `${size}px`;
-    p.style.animationDelay = `${delay}s`;
-    p.style.animationDuration = `${dur}s`;
+    p.style.animationDelay = `${Math.random() * 6}s`;
+    p.style.animationDuration = `${4 + Math.random() * 4}s`;
     box.appendChild(p);
   }
 }
 
 /* =========================================================
-   Inclinación 3D + Holograma
-   - Desktop: mousemove sobre la carta
-   - Mobile: DeviceOrientationEvent (requiere permiso en iOS 13+)
+   Inclinación 3D + Holograma (idéntico a v1)
    ========================================================= */
 const card   = $('#hero-card');
 const stage  = $('#stage');
 const holo   = $('#holo');
 const gloss  = $('#gloss');
 
-let tilt = { x: 0, y: 0 };       // inclinación objetivo (deg)
-let tiltCur = { x: 0, y: 0 };    // inclinación actual (lerp)
+let tilt = { x: 0, y: 0 };
+let tiltCur = { x: 0, y: 0 };
 const MAX_TILT = 14;
 
 function applyTilt() {
@@ -978,12 +1075,10 @@ function applyTilt() {
 
   card.style.transform = `rotateX(${tiltCur.x.toFixed(2)}deg) rotateY(${tiltCur.y.toFixed(2)}deg)`;
 
-  // Holograma: movemos background-position según inclinación
   const hx = 50 + tiltCur.y * 3;
   const hy = 50 + tiltCur.x * 3;
   holo.style.backgroundPosition = `${hx}% ${hy}%`;
 
-  // Gloss: punto de luz ligado al tilt
   const mx = 50 + tiltCur.y * 2.5;
   const my = 50 - tiltCur.x * 2.5;
   gloss.style.setProperty('--mx', `${mx}%`);
@@ -993,16 +1088,14 @@ function applyTilt() {
 }
 requestAnimationFrame(applyTilt);
 
-/* ---- Desktop: ratón sobre la carta ---- */
 stage.addEventListener('mousemove', (e) => {
   const r = stage.getBoundingClientRect();
-  const px = (e.clientX - r.left) / r.width;   // 0..1
-  const py = (e.clientY - r.top)  / r.height;  // 0..1
-  tilt.y = (px - 0.5) *  MAX_TILT * 2;          // rotY
-  tilt.x = (0.5 - py) *  MAX_TILT * 2;          // rotX
+  const px = (e.clientX - r.left) / r.width;
+  const py = (e.clientY - r.top)  / r.height;
+  tilt.y = (px - 0.5) *  MAX_TILT * 2;
+  tilt.x = (0.5 - py) *  MAX_TILT * 2;
   card.classList.add('is-active');
 
-  // gloss sigue al cursor exactamente (mejor feedback)
   gloss.style.setProperty('--mx', `${px * 100}%`);
   gloss.style.setProperty('--my', `${py * 100}%`);
 });
@@ -1011,19 +1104,11 @@ stage.addEventListener('mouseleave', () => {
   card.classList.remove('is-active');
 });
 
-/* ---- Mobile: giroscopio ----
-   iOS 13+ requiere requestPermission tras gesto de usuario.
-   Android la mayoría lo da automáticamente.                  */
 function handleOrientation(ev) {
-  // ev.beta: -180..180 (inclinación front/back)
-  // ev.gamma: -90..90 (inclinación izq/der)
   const beta  = ev.beta  || 0;
   const gamma = ev.gamma || 0;
-
-  // Normalizamos alrededor de una posición cómoda de lectura (~ beta 45º)
   const normX = Math.max(-MAX_TILT, Math.min(MAX_TILT, (beta - 45) * 0.5));
   const normY = Math.max(-MAX_TILT, Math.min(MAX_TILT, gamma * 0.6));
-
   tilt.x = normX;
   tilt.y = normY;
   card.classList.add('is-active');
@@ -1031,18 +1116,11 @@ function handleOrientation(ev) {
 
 function enableGyro() {
   if (typeof DeviceOrientationEvent === 'undefined') return;
-
-  // iOS permission
   if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-    // Pedimos permiso en el primer toque sobre la carta
     const askOnce = () => {
       DeviceOrientationEvent.requestPermission()
-        .then(resp => {
-          if (resp === 'granted') {
-            window.addEventListener('deviceorientation', handleOrientation);
-          }
-        })
-        .catch(() => { /* silencioso */ });
+        .then(resp => { if (resp === 'granted') window.addEventListener('deviceorientation', handleOrientation); })
+        .catch(() => {});
       stage.removeEventListener('click', askOnce);
     };
     stage.addEventListener('click', askOnce, { once: true });
@@ -1072,7 +1150,6 @@ function readForm() {
   state.time   = form.time.value;
 }
 
-/* Emoji selector */
 $$('#emojiRow button').forEach(b => {
   b.addEventListener('click', () => {
     $$('#emojiRow button').forEach(x => x.classList.remove('active'));
@@ -1081,7 +1158,6 @@ $$('#emojiRow button').forEach(b => {
   });
 });
 
-/* Foto */
 form.photo.addEventListener('change', (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
@@ -1093,20 +1169,18 @@ form.photo.addEventListener('change', (e) => {
   reader.readAsDataURL(file);
 });
 
-/* Generar */
 $('#btnGenerate').addEventListener('click', () => {
   readForm();
-  if (!state.name) { toast('Pon tu nombre para forjar la carta'); form.name.focus(); return; }
+  if (!state.name)   { toast('Pon tu nombre para forjar la carta'); form.name.focus(); return; }
   if (!state.metric || parseFloat(state.metric) <= 0) { toast('Introduce una métrica válida'); form.metric.focus(); return; }
+  if (!state.photo)  { toast('Sube una foto para la ilustración central'); return; }
 
   renderCard();
 
-  // Guardamos nombre + foto (persistencia mínima)
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ name: state.name, photo: state.photo }));
   } catch(e) {}
 
-  // Colapsar formulario para dar protagonismo a la carta
   $('#formWrap').classList.add('collapsed');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
@@ -1129,13 +1203,6 @@ $('#btnEdit').addEventListener('click', () => {
 
 /* =========================================================
    BOTÓN VIRAL · html2canvas + Web Share API
-   ---------------------------------------------------------
-   Pasos:
-   1. Ponemos la carta en modo "capturing" (transforms en reposo)
-   2. html2canvas la renderiza a un <canvas>
-   3. canvas -> Blob PNG
-   4. Si navigator.share soporta ficheros, abrimos share nativo
-   5. Fallback: descarga directa del PNG
    ========================================================= */
 $('#btnShare').addEventListener('click', async () => {
   const btn = $('#btnShare');
@@ -1144,41 +1211,34 @@ $('#btnShare').addEventListener('click', async () => {
   btn.textContent = 'Preparando…';
 
   try {
-    // 1. Estado reposo para captura limpia
     card.classList.add('capturing');
-    // Pequeño delay para que el navegador pinte el estado reposo
     await new Promise(r => setTimeout(r, 60));
 
-    // 2. Render con html2canvas. scale=2 para resolución retina.
-    //    backgroundColor null para respetar el fondo de la carta.
     const canvas = await html2canvas(card, {
       backgroundColor: null,
       scale: 2,
       useCORS: true,
       logging: false,
-      // allowTaint true por si el user sube imagen externa vía dataURL
       allowTaint: true
     });
 
     card.classList.remove('capturing');
 
-    // 3. Canvas -> Blob
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 1));
     if (!blob) throw new Error('No se pudo generar la imagen');
 
     const filename = `herocard-${(state.name || 'hero').toLowerCase().replace(/\s+/g, '-')}.png`;
     const file = new File([blob], filename, { type: 'image/png' });
 
-    // 4. Web Share API con ficheros (iOS 15+, Android Chrome)
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      const sport = SPORT_DATA[state.sport] || SPORT_DATA['Running'];
       await navigator.share({
         files: [file],
         title: 'Mi HeroCard',
-        text: `${state.name} · ${state.sport} · ${formatNum(state.metric)} ${state.unit} 🔥`
+        text: `${state.name} usó ${sport.attack} · ${formatNum(state.metric)} ${state.unit} ${state.emoji}`
       });
       toast('Compartido ✓');
     } else {
-      // 5. Fallback: descargar PNG
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -1192,7 +1252,6 @@ $('#btnShare').addEventListener('click', async () => {
   } catch (err) {
     console.error(err);
     card.classList.remove('capturing');
-    // AbortError es cuando el usuario cierra el share nativo: no es error real
     if (err && err.name !== 'AbortError') toast('No se pudo compartir. Intenta de nuevo.');
   } finally {
     btn.disabled = false;
@@ -1200,7 +1259,7 @@ $('#btnShare').addEventListener('click', async () => {
   }
 });
 
-/* Render inicial con valores placeholder */
+/* Render inicial */
 state.metric = 10;
 renderCard();
 </script>
